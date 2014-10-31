@@ -4,8 +4,6 @@
 
 Launch 3 CoreOS instances on AWS Cloud Formation via: [this link](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#cstack=sn%7ECouchbase-CoreOS%7Cturl%7Ehttp://tleyden-misc.s3.amazonaws.com/couchbase-coreos/coreos-stable-pv.template)
 
-Ssh into one of the coreos instances, it doesn't matter which one.
-
 ## Update the "memlock" setting
 
 It will work without updating the memlock limit setting, but at best it will be less performant, and at worst it will lead to crashes.  Unfortunately this step is still manual.
@@ -16,7 +14,13 @@ It will work without updating the memlock limit setting, but at best it will be 
  * `sudo systemctl daemon-reload`
  * `sudo systemctl restart docker`
 
-## 
+## Clone repository with scripts / unit files
+
+Ssh into any one of the CoreOS nodes, it doesn't matter which wone.
+
+```
+$ git clone https://github.com/tleyden/couchbase-server-coreos.git
+```
 
 ## Generate unit files
 
@@ -38,11 +42,29 @@ Replace `user:passw0rd` with a sensible username and password.  It **must** be c
 
 ## Launch CoreOS Fleet
 
-* 
-* wget https://raw.githubusercontent.com/tleyden/docker/master/couchbase-server-2.2/fleet-unit-files/couchbase_bootstrap_node.service
-* wget https://raw.githubusercontent.com/tleyden/docker/master/couchbase-server-2.2/fleet-unit-files/couchbase_bootstrap_node_announce.service
-* wget https://raw.githubusercontent.com/tleyden/docker/master/couchbase-server-2.2/fleet-unit-files/couchbase_node.service
+```
+$ cd couchbase-server-coreos/2.2/fleet
+$ fleetctl start couchbase_bootstrap_node.service couchbase_bootstrap_node_announce.service couchbase_node.*.service
+```
 
+## Verify correct startup
+
+```
+$ fleetctl list-units
+```
+
+You should see four units, all as active.
+
+## Login to Couchbase Server Web Admin
+
+* Find the public ip of one of your CoreOS instances via the AWS console
+* In a browser, go to http://<instance_public_ip>:8091
+* Login with the username/password you provided above
+
+## Kick off initial rebalance
+
+* Click server nodes
+* Click "Rebalance"
 
 # TODO -- use volume container
 
