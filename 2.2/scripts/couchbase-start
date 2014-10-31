@@ -37,6 +37,7 @@ if [ $1 = -bootstrap ]; then
     # allow couchbase user to write to data dir
     chown -R couchbase:couchbase /var/lib/couchbase
 
+    # todo: refactor out into a function
     echo "Changing data directory to point to /var/lib/couchbase/data";
     untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
         -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/data
@@ -65,6 +66,7 @@ elif [ $1 = -join ]; then
     # allow couchbase user to write to data dir
     chown -R couchbase:couchbase /var/lib/couchbase
 
+    # todo: refactor out into a function
     echo "Changing data directory to point to /var/lib/couchbase/data";
     untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
         -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/data
