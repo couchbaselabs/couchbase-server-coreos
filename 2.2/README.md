@@ -33,13 +33,18 @@ $ cd couchbase-server-coreos/2.2/fleet
 $ create_node_services.sh 2
 ```
 
+After this step, you should have two new files:
+
+* couchbase_node.1.service
+* couchbase_node.2.service
+
 ## Add Couchbase credentials to etcd
 
 ```
 $ etcdctl set /services/couchbase/userpass "user:passw0rd"
 ```
 
-Replace `user:passw0rd` with a sensible username and password.  It **must** be colon separated, with no spaces.
+Replace `user:passw0rd` with a sensible username and password.  It **must** be colon separated, with no spaces.  The password itself must be at least 6 characters.
 
 ## Launch CoreOS Fleet
 
@@ -59,7 +64,7 @@ You should see four units, all as active.
 ## Login to Couchbase Server Web Admin
 
 * Find the public ip of one of your CoreOS instances via the AWS console
-* In a browser, go to http://<instance_public_ip>:8091
+* In a browser, go to `http://<instance_public_ip>:8091`
 * Login with the username/password you provided above
 
 ## Kick off initial rebalance
