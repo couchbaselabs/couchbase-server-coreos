@@ -16,7 +16,7 @@ It will work without updating the memlock limit setting, but at best it will be 
 
 ## Clone repository with scripts / unit files
 
-Ssh into any one of the CoreOS nodes, it doesn't matter which wone.
+Ssh into any one of the CoreOS nodes, it doesn't matter which one.
 
 ```
 $ git clone https://github.com/tleyden/couchbase-server-coreos.git
@@ -29,6 +29,7 @@ We already have a special unit file for the "bootstrap node", but we'll need uni
 In the default CloudFormation, it will launch three nodes total.  Which means we want two other Couchbase Server nodes.  Generate the unit files for those two nodes with:
 
 ```
+$ cd couchbase-server-coreos/2.2/fleet
 $ create_node_services.sh 2
 ```
 
