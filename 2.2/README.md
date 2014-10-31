@@ -8,15 +8,19 @@
 
 ## Update the "memlock" setting
 
-It will work without updating the memlock limit setting, but at best it will be less performant, and at worst it will lead to crashes.  Unfortunately this step is still manual.
+It will work without updating the memlock limit setting, but at best it will be less performant, and at worst it will lead to crashes.  
 
-* Ssh into each CoreOS node in the cluster and:
+* SSH into each CoreOS node in the cluster and:
     * `cp /usr/lib/systemd/system/docker.service /etc/systemd/system/`
     * edit /etc/systemd/system/docker.service and add line: `LimitMEMLOCK=infinity`
     * `sudo systemctl daemon-reload`
     * `sudo systemctl restart docker`
 
 ## Create data dir
+
+Rather than store databases and indexes on the container's filesystem, it is much more efficient to mount a volume in the container to a directory on the CoreOS instance, and have all data stored there instead.
+
+SSH into **each CoreOS node** in the cluster and:
 
 ```
 $ sudo mkdir -p /var/lib/couchbase/data
@@ -81,10 +85,6 @@ You should see four units, all as active.
 
 * Click server nodes
 * Click "Rebalance"
-
-# TODO -- use volume container
-
-Currently data is stored inside the container filesystem.  It should be changed to store the data on a volume mounted from the CoreOS instance.
 
 # References
 
