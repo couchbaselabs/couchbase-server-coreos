@@ -34,6 +34,16 @@ if [ $1 = -bootstrap ]; then
     CB_USERNAME=${array[0]}
     CB_PASSWORD=${array[1]}
 
+    # allow couchbase user to write to data dir
+    chown -R couchbase:couchbase /var/lib/couchbase
+
+    echo "Changing data directory to point to /var/lib/couchbase/data";
+    untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
+        -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/data
+    echo "Changing index directory to point to /var/lib/couchbase/index";
+    untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
+        -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/index
+
     echo "Make Couchbase ($IP) the first cluster node with $CB_USERNAME / $CB_PASSWORD"
     untilsuccessful couchbase-cli cluster-init -c $IP \
 	--cluster-init-username=$CB_USERNAME \
@@ -51,6 +61,16 @@ elif [ $1 = -join ]; then
     IFS=':' read -a array <<< "$CB_USERNAME_PASSWORD"
     CB_USERNAME=${array[0]}
     CB_PASSWORD=${array[1]}
+
+    # allow couchbase user to write to data dir
+    chown -R couchbase:couchbase /var/lib/couchbase
+
+    echo "Changing data directory to point to /var/lib/couchbase/data";
+    untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
+        -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/data
+    echo "Changing index directory to point to /var/lib/couchbase/index";
+    untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
+        -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/index
 
     echo "Make Couchbase ($IP) join the cluster via $BOOTSTRAP_IP with $CB_USERNAME / $CB_PASSWORD "
     untilsuccessful couchbase-cli server-add -c $BOOTSTRAP_IP \
