@@ -44,7 +44,7 @@ fi
 git clone https://github.com/tleyden/couchbase-server-coreos.git
 
 # generate unit files for non-bootstrap couchbase server nodes
-cd couchbase-server-coreos/2.2/fleet && ./create_node_services.sh $non_bootrap_nodes
+cd couchbase-server-coreos/2.2/fleet && ./create_node_services.sh $non_bootstrap_nodes
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
