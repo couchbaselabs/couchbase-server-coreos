@@ -6,50 +6,43 @@ This is a Docker image and set of CoreOS unit/cloud-config files which makes it 
 
 ## Launch CoreOS instances via AWS Cloud Formation
 
+Click the "Launch Stack" button to launch your CoreOS instances via AWS Cloud Formation:
+
 [<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#cstack=sn%7ECouchbase-CoreOS%7Cturl%7Ehttp://tleyden-misc.s3.amazonaws.com/couchbase-coreos/coreos-stable-pv.template)
 
 *NOTE: this is hardcoded to use the us-east-1 region, so if you need a different region, you should edit the URL accordingly*
 
-## Clone repository with scripts / unit files
+Use the following parameters in the form:
 
-Ssh into any one of the CoreOS nodes, it doesn't matter which one.
+* **ClusterSize**: 3 nodes (default)
+* **Discovery URL**:  as it says, you need to grab a new token from https://discovery.etcd.io/new and paste it in the box.
+* **KeyPair**:  use whatever you normally use to start EC2 instances.  For this discussion, let's assumed you used `aws`, which corresponds to a file you have on your laptop called `aws.cer`
 
-```
-$ git clone https://github.com/tleyden/couchbase-server-coreos.git
-```
 
-## Generate unit files
-
-We already have a special unit file for the "bootstrap node", but we'll need unit files for the N other Couchbase Server nodes.
-
-In the default CloudFormation, it will launch three nodes total.  Which means we want two other Couchbase Server nodes.  Generate the unit files for those two nodes with:
+## Download cluster-init script
 
 ```
-$ cd couchbase-server-coreos/2.2/fleet
-$ create_node_services.sh 2
+$ wget https://raw.githubusercontent.com/tleyden/couchbase-server-coreos/master/2.2/scripts/cluster-init.sh
 ```
 
-After this step, you should have two new files:
-
-* couchbase_node.1.service
-* couchbase_node.2.service
-
-## Add Couchbase credentials to etcd
+## Launch cluster
 
 ```
-$ etcdctl set /services/couchbase/userpass "user:passw0rd"
+$ ./cluster-init.sh -n 3 -u "user:passw0rd"
 ```
+
+Where:
+
+* **-n** the total number of couchbase nodes to start -- should correspond to number of ec2 instances (eg, 3)
+* **-u** the username and password as a single string, delimited by a colon (:) 
 
 Replace `user:passw0rd` with a sensible username and password.  It **must** be colon separated, with no spaces.  The password itself must be at least 6 characters.
 
-## Launch CoreOS Fleet
+Once this command completes, your cluster will be in the process of launching.
 
-```
-$ cd couchbase-server-coreos/2.2/fleet
-$ fleetctl start couchbase_bootstrap_node.service couchbase_bootstrap_node_announce.service couchbase_node.*.service
-```
+## Verify 
 
-## Verify correct startup
+To check the status of your cluster, run:
 
 ```
 $ fleetctl list-units
@@ -57,13 +50,23 @@ $ fleetctl list-units
 
 You should see four units, all as active.
 
-## Login to Couchbase Server Web Admin
+```
+UNIT						MACHINE				ACTIVE	SUB
+couchbase_bootstrap_node.service		375d98b9.../10.63.168.35	active	running
+couchbase_bootstrap_node_announce.service	375d98b9.../10.63.168.35	active	running
+couchbase_node.1.service			8cf54d4d.../10.187.61.136	active	running
+couchbase_node.2.service			b8cf0ed6.../10.179.161.76	active	running
+```
 
-* Find the public ip of one of your CoreOS instances via the AWS console
+## Rebalance Couchbase Cluster
+
+**Login to Couchbase Server Web Admin**
+
+* Find the public ip of any of your CoreOS instances via the AWS console
 * In a browser, go to `http://<instance_public_ip>:8091`
 * Login with the username/password you provided above
 
-## Kick off initial rebalance
+**Kick off initial rebalance**
 
 * Click server nodes
 * Click "Rebalance"
