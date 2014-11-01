@@ -18,7 +18,6 @@ Use the following parameters in the form:
 * **Discovery URL**:  as it says, you need to grab a new token from https://discovery.etcd.io/new and paste it in the box.
 * **KeyPair**:  use whatever you normally use to start EC2 instances.  For this discussion, let's assumed you used `aws`, which corresponds to a file you have on your laptop called `aws.cer`
 
-
 ## ssh into a CoreOS instance
 
 Go to the AWS console under EC2 instances and find the public ip of one of your newly launched CoreOS instances.  
@@ -85,10 +84,18 @@ couchbase_node.2.service			b8cf0ed6.../10.179.161.76	active	running
 * In a browser, go to `http://<instance_public_ip>:8091`
 * Login with the username/password you provided above
 
+After logging in, your Server Nodes tab should look like this:
+
+![screenshot](http://tleyden-misc.s3.amazonaws.com/blog_images/couchbase_admin_ui_prerebalance.png)
+
 **Kick off initial rebalance**
 
 * Click server nodes
 * Click "Rebalance"
+
+After the rebalance is complete, you should see:
+
+![screenshot](http://tleyden-misc.s3.amazonaws.com/blog_images/couchbase_admin_ui_post_rebalance.png)
 
 # References
 
