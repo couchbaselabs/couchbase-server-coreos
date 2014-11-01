@@ -30,11 +30,21 @@ if [[ -z "$numnodes" || -z "$userpass" ]] ; then
     exit 1 
 fi
 
+# calculate how many "other" couchbase nodes aside from the
+# bootstrap node by subtracting 1 from the total # of nodes
+non_bootstrap_nodes=$(( ${numnodes} - 1 ))
+
+# validate that we have a valid value
+if [ "$non_bootrap_nodes" == "-1" ]; then
+    echo "You passed an invalid value for n: $numnodes"
+    exit 1 
+fi
+
 # clone repo with fleet unit files
 git clone https://github.com/tleyden/couchbase-server-coreos.git
 
 # generate unit files for non-bootstrap couchbase server nodes
-cd couchbase-server-coreos/2.2/fleet && ./create_node_services.sh $numnodes 
+cd couchbase-server-coreos/2.2/fleet && ./create_node_services.sh $non_bootrap_nodes
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
