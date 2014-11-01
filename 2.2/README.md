@@ -70,10 +70,10 @@ You should see four units, all as active.
 
 ```
 UNIT						MACHINE				ACTIVE	SUB
-couchbase_bootstrap_node.service		375d98b9.../10.63.168.35	active	running
-couchbase_bootstrap_node_announce.service	375d98b9.../10.63.168.35	active	running
-couchbase_node.1.service			8cf54d4d.../10.187.61.136	active	running
-couchbase_node.2.service			b8cf0ed6.../10.179.161.76	active	running
+couchbase_bootstrap_node.service                375d98b9.../10.63.168.35	active	running
+couchbase_bootstrap_node_announce.service       375d98b9.../10.63.168.35	active	running
+couchbase_node.1.service                        8cf54d4d.../10.187.61.136	active	running
+couchbase_node.2.service                        b8cf0ed6.../10.179.161.76	active	running
 ```
 
 ## Rebalance Couchbase Cluster
