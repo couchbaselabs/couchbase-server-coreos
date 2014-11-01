@@ -1,32 +1,14 @@
 # Running Couchbase Server 2.2 under CoreOS Fleet
 
+This is a Docker image and set of CoreOS unit/cloud-config files which makes it easy to fire up a Couchbase Server 2.2 cluster that looks like:
+
+![architecture diagram](http://tleyden-misc.s3.amazonaws.com/blog_images/couchbase-coreos-onion.png)
+
 ## Launch CoreOS instances via AWS Cloud Formation
 
-[<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#cstack=sn%7ECouchbase-CoreOS%7Cturl%7Ehttp://tleyden-misc.s3.amazonaws.com/couchbase-coreos/coreos-stable-pv.template) 
+[<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#cstack=sn%7ECouchbase-CoreOS%7Cturl%7Ehttp://tleyden-misc.s3.amazonaws.com/couchbase-coreos/coreos-stable-pv.template)
 
 *NOTE: this is hardcoded to use the us-east-1 region, so if you need a different region, you should edit the URL accordingly*
-
-## Update the "memlock" setting
-
-It will work without updating the memlock limit setting, but at best it will be less performant, and at worst it will lead to crashes.  
-
-* SSH into each CoreOS node in the cluster and:
-    * `cp /usr/lib/systemd/system/docker.service /etc/systemd/system/`
-    * edit /etc/systemd/system/docker.service and add line: `LimitMEMLOCK=infinity`
-    * `sudo systemctl daemon-reload`
-    * `sudo systemctl restart docker`
-
-## Create data dir
-
-Rather than store databases and indexes on the container's filesystem, it is much more efficient to mount a volume in the container to a directory on the CoreOS instance, and have all data stored there instead.
-
-SSH into **each CoreOS node** in the cluster and:
-
-```
-$ sudo mkdir -p /var/lib/couchbase/data
-$ sudo mkdir -p /var/lib/couchbase/index
-$ sudo chown -R core:core /var/lib/couchbase
-```
 
 ## Clone repository with scripts / unit files
 
