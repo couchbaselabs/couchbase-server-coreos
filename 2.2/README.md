@@ -19,10 +19,29 @@ Use the following parameters in the form:
 * **KeyPair**:  use whatever you normally use to start EC2 instances.  For this discussion, let's assumed you used `aws`, which corresponds to a file you have on your laptop called `aws.cer`
 
 
+## ssh into a CoreOS instance
+
+Go to the AWS console under EC2 instances and find the public ip of one of your newly launched CoreOS instances.  
+
+Choose any one of them (it doesn't matter which), and ssh into it as the **core** user with the cert provided in the previous step:
+
+```
+$ ssh -i aws.cer -A core@ec2-54-83-80-161.compute-1.amazonaws.com
+```
+
+## Sanity check
+
+```
+$ fleetctl list-units
+```
+
+Should return an empty list, but no errors of any kind.
+
 ## Download cluster-init script
 
 ```
 $ wget https://raw.githubusercontent.com/tleyden/couchbase-server-coreos/master/2.2/scripts/cluster-init.sh
+$ chmod +x cluster-init.sh
 ```
 
 ## Launch cluster
