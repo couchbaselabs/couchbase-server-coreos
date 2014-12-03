@@ -1,5 +1,5 @@
 
-FROM centos
+FROM centos:centos6
 MAINTAINER Traun Leyden <tleyden@couchbase.com>
 
 ENV CB_VERSION		3.0.1

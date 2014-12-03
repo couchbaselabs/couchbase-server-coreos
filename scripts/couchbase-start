@@ -7,10 +7,10 @@
 # which starts first node in the cluster, or to join an existing cluster:
 #
 # couchbase-start -join 10.0.1.1 10.0.1.2
-# 
+#
 # where the first arg is the ip of the bootstrap node,
 # and second arg is the ip of the new node.
- 
+
 function untilsuccessful() {
 	"$@"
 	while [ $? -ne 0 ]; do
@@ -20,10 +20,8 @@ function untilsuccessful() {
 	done
 }
 
-
 # Start Couchbase in background
-su - couchbase -c "/opt/couchbase/bin/couchbase-server -- -noinput" &
-PID=$!
+service couchbase-server start
 
 if [ $1 = -bootstrap ]; then
 
@@ -32,6 +30,7 @@ if [ $1 = -bootstrap ]; then
     CB_USERNAME_PASSWORD=$2  # eg, user:passw0rd
     IFS=':' read -a array <<< "$CB_USERNAME_PASSWORD"
     CB_USERNAME=${array[0]}
+    echo "$CB_USERNAME"
     CB_PASSWORD=${array[1]}
 
     # allow couchbase user to write to data dir
@@ -51,7 +50,7 @@ if [ $1 = -bootstrap ]; then
 	--cluster-init-password=$CB_PASSWORD
     untilsuccessful couchbase-cli bucket-create -c $IP \
 	-u $CB_USERNAME -p $CB_PASSWORD \
-	--bucket=default --bucket-ramsize=128      
+	--bucket=default --bucket-ramsize=128
 
 elif [ $1 = -join ]; then
 
@@ -82,5 +81,4 @@ elif [ $1 = -join ]; then
 
 fi
 
-# Wait indefinitely on Couchbase process
-wait $PID
+sleep infinity
