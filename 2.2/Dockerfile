@@ -4,7 +4,7 @@ MAINTAINER Traun Leyden <tleyden@couchbase.com>
 
 ENV CB_VERSION		2.2.0
 ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
-ENV CB_PACKAGE		couchbase-server-community_${CB_VERSION}_x86_64.rpm
+ENV CB_PACKAGE		couchbase-server-community_2.2.0_x86_64.rpm
 
 # Install couchbase
 RUN yum install -y wget pkgconfig openssl tar hostname

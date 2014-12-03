@@ -9,16 +9,20 @@ import (
 
 type Params struct {
 	CB_VERSION string
+	CB_PACKAGE string
 }
 
 func main() {
 
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: ./generate_dockerfiles <couchbase version>")
+		log.Fatal("Usage: ./generate_dockerfiles <couchbase version> <couchbase package>")
 		return
 	}
 
-	params := Params{CB_VERSION: os.Args[1]}
+	params := Params{
+		CB_VERSION: os.Args[1],
+		CB_PACKAGE: os.Args[2],
+	}
 
 	templateFile := "../templates/Dockerfile.template"
 
