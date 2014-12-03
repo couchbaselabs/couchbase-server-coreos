@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-# For now, no templates needed, just copy ..
+# For the following files, they are static so just copy them
 
-cp ../scripts/couchbase-start ../2.2.0/scripts
-cp ../scripts/couchbase-start ../3.0.1/scripts
+cp ../templates/README.md \
+   ../2.2.0/
+
+cp ../templates/README.md \
+   ../3.0.1/
+
+cp ../scripts/couchbase-start \
+   ../2.2.0/scripts
+
+cp ../scripts/couchbase-start \
+   ../3.0.1/scripts
