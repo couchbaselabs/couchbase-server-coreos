@@ -47,7 +47,7 @@ fi
 git clone https://github.com/couchbaselabs/couchbase-server-docker
 
 # generate unit files for non-bootstrap couchbase server nodes
-cd couchbase-server-coreos/$version/fleet && ./create_node_services.sh $non_bootstrap_nodes
+cd couchbase-server-docker/$version/fleet && ./create_node_services.sh $non_bootstrap_nodes
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
