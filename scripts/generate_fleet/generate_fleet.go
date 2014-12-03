@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-type Params struct {
+type FleetParams struct {
 	CB_VERSION string
 }
 
@@ -20,7 +20,7 @@ func main() {
 		return
 	}
 
-	params := Params{
+	params := FleetParams{
 		CB_VERSION: os.Args[1],
 	}
 
@@ -44,7 +44,7 @@ func main() {
 		}
 
 		// create a writer that is going to write to <dest dir>/templateFile
-		filename := filepath.Split(templateFile)
+		_, filename := filepath.Split(templateFile)
 		destFile := path.Join(destDir, filename)
 
 		f, err := os.Create(destFile)
