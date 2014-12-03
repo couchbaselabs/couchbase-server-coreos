@@ -9,7 +9,6 @@ ENV CB_PACKAGE		couchbase-server-community_2.2.0_x86_64.rpm
 # Install couchbase
 RUN yum install -y wget pkgconfig openssl tar hostname
 RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
-RUN ln -s /opt/couchbase/bin/couchbase-cli /usr/local/bin/
 
 # Put start script
 ADD scripts/couchbase-start /usr/local/bin/
