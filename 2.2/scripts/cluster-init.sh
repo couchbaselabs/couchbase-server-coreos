@@ -5,16 +5,18 @@
 # ./cluster-init.sh -n 3 -u "user:passw0rd"
 #
 # Where:
+#   -v Couchbase Server version (3.0.1 or 2.2)
 #   -n number of couchbase nodes to start
 #   -u the username and password as a single string, delimited by a colon (:)
 # 
 # This will start a 3-node couchbase cluster (so you will need to have kicked off
 # a cluster with at least 3 ec2 instances)
 
-usage="./cluster-init.sh -n 3 -u \"user:passw0rd\""
+usage="./cluster-init.sh -v 3.0.1 -n 3 -u \"user:passw0rd\""
 
-while getopts ":n:u:" opt; do
+while getopts ":v:n:u:" opt; do
       case $opt in
+        v  ) version=$OPTARG ;;
         n  ) numnodes=$OPTARG ;;
         u  ) userpass=$OPTARG ;;
         \? ) echo $usage
@@ -25,7 +27,8 @@ done
 shift $(($OPTIND - 1))
 
 # make sure required args were given
-if [[ -z "$numnodes" || -z "$userpass" ]] ; then
+if [[ -z "$version" || -z "$numnodes" || -z "$userpass" ]] ; then
+    echo "Required argument was empty"
     echo $usage
     exit 1 
 fi
@@ -41,10 +44,10 @@ if [ "$non_bootrap_nodes" == "-1" ]; then
 fi
 
 # clone repo with fleet unit files
-git clone https://github.com/tleyden/couchbase-server-coreos.git
+git clone https://github.com/couchbaselabs/couchbase-server-docker
 
 # generate unit files for non-bootstrap couchbase server nodes
-cd couchbase-server-coreos/2.2/fleet && ./create_node_services.sh $non_bootstrap_nodes
+cd couchbase-server-coreos/$version/fleet && ./create_node_services.sh $non_bootstrap_nodes
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
