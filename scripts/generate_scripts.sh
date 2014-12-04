@@ -8,8 +8,3 @@ cp ../templates/README.md \
 cp ../templates/README.md \
    ../3.0.1/
 
-cp ../scripts/couchbase-start \
-   ../2.2.0/scripts
-
-cp ../scripts/couchbase-start \
-   ../3.0.1/scripts
