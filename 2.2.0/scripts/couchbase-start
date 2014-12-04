@@ -48,6 +48,7 @@ if [ $1 = -bootstrap ]; then
     untilsuccessful /opt/couchbase/bin/couchbase-cli cluster-init -c $IP \
 	--cluster-init-username=$CB_USERNAME \
 	--cluster-init-password=$CB_PASSWORD
+    echo "Call bucket-create"
     untilsuccessful /opt/couchbase/bin/couchbase-cli bucket-create -c $IP \
 	-u $CB_USERNAME -p $CB_PASSWORD \
 	--bucket=default --bucket-ramsize=128
