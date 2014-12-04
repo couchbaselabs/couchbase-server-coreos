@@ -51,7 +51,7 @@ if [ $1 = -bootstrap ]; then
 	--cluster-password=$CB_PASSWORD \
 	-u $CB_USERNAME \
 	-p $CB_PASSWORD \
-        --cluster-ramsize=2400
+        --cluster-ramsize=3000
     {{ else }}
     untilsuccessful /opt/couchbase/bin/couchbase-cli cluster-init -c $IP \
 	--cluster-init-username=$CB_USERNAME \
