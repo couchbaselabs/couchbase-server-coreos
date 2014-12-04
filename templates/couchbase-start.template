@@ -57,7 +57,7 @@ if [ $1 = -bootstrap ]; then
 	--cluster-init-username=$CB_USERNAME \
 	--cluster-init-password=$CB_PASSWORD
     {{ end }}
-
+    
     echo "Call bucket-create"
     untilsuccessful /opt/couchbase/bin/couchbase-cli bucket-create -c $IP \
 	-u $CB_USERNAME -p $CB_PASSWORD \

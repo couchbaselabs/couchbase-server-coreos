@@ -45,13 +45,14 @@ if [ $1 = -bootstrap ]; then
         -u $CB_USERNAME -p $CB_PASSWORD --node-init-index-path=/var/lib/couchbase/index
 
     echo "Make Couchbase ($IP) the first cluster node with $CB_USERNAME / $CB_PASSWORD"
+    
     untilsuccessful /opt/couchbase/bin/couchbase-cli cluster-init -c $IP \
 	--cluster-username=$CB_USERNAME \
 	--cluster-password=$CB_PASSWORD \
 	-u $CB_USERNAME \
 	-p $CB_PASSWORD \
-        --cluster-ramsize=2400
-
+        --cluster-ramsize=3000
+    
     echo "Call bucket-create"
     untilsuccessful /opt/couchbase/bin/couchbase-cli bucket-create -c $IP \
 	-u $CB_USERNAME -p $CB_PASSWORD \

@@ -26,7 +26,6 @@ func main() {
 	case "3.0.1":
 		params.CB_VERSION_3 = "true"
 	case "2.2.0":
-		params.CB_VERSION_3 = "false"
 	default:
 		log.Panic(fmt.Sprintf("Unknown version: %v", rawVersionString))
 	}
