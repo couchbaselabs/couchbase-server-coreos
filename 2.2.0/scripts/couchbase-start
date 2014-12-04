@@ -42,7 +42,7 @@ if [ $1 = -bootstrap ]; then
         -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/data
     echo "Changing index directory to point to /var/lib/couchbase/index";
     untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
-        -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/index
+        -u $CB_USERNAME -p $CB_PASSWORD --node-init-index-path=/var/lib/couchbase/index
 
     echo "Make Couchbase ($IP) the first cluster node with $CB_USERNAME / $CB_PASSWORD"
     untilsuccessful /opt/couchbase/bin/couchbase-cli cluster-init -c $IP \
@@ -71,7 +71,7 @@ elif [ $1 = -join ]; then
         -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/data
     echo "Changing index directory to point to /var/lib/couchbase/index";
     untilsuccessful /opt/couchbase/bin/couchbase-cli node-init -c $IP \
-        -u $CB_USERNAME -p $CB_PASSWORD --node-init-data-path=/var/lib/couchbase/index
+        -u $CB_USERNAME -p $CB_PASSWORD --node-init-index-path=/var/lib/couchbase/index
 
     echo "Make Couchbase ($IP) join the cluster via $BOOTSTRAP_IP with $CB_USERNAME / $CB_PASSWORD "
     untilsuccessful /opt/couchbase/bin/couchbase-cli server-add -c $BOOTSTRAP_IP \
