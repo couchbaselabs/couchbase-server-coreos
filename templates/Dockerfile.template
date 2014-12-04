@@ -7,7 +7,7 @@ ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
 ENV CB_PACKAGE		{{ .CB_PACKAGE }}
 
 # Install couchbase
-RUN yum install -y wget pkgconfig openssl tar hostname
+RUN yum install -y wget pkgconfig openssl tar hostname initscripts
 RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
 
 # Put start script
