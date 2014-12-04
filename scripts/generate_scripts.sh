@@ -8,3 +8,5 @@ cp ../templates/README.md \
 cp ../templates/README.md \
    ../3.0.1/
 
+go run generate_scripts/generate_scripts.go 2.2.0 > ../2.2.0/scripts/couchbase-start
+go run generate_scripts/generate_scripts.go 3.0.1 > ../3.0.1/scripts/couchbase-start
