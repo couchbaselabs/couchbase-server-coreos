@@ -1,6 +1,7 @@
 [Unit]
 Description=Announce Couchbase bootstrap node
 BindsTo=couchbase_bootstrap_node.service
+After=couchbase_bootstrap_node.service
 
 [Service]
 ExecStart=/bin/sh -c "while true; do etcdctl set /services/couchbase/bootstrap_ip '%H\' --ttl 60;sleep 45;done"
