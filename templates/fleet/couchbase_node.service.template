@@ -2,7 +2,7 @@
 Description=couchbase_node
 
 [Service]
-TimeoutStartSec=1000
+TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker kill couchbase
 ExecStartPre=-/usr/bin/docker rm couchbase
 ExecStartPre=/usr/bin/docker pull tleyden5iwx/couchbase-server-{{ .CB_VERSION }}
