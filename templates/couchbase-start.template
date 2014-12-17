@@ -20,6 +20,11 @@ function untilsuccessful() {
 	done
 }
 
+# Figure out how much memory to use
+TOTAL_MEM_MB=$(free -m | awk '/^Mem:/{print $2}')
+CLUSTER_RAM_SIZE_MB=$(($TOTAL_MEM_MB * 75 / 100))
+DEFAULT_BUCKET_RAM_SIZE_MB=128
+
 # Start Couchbase in background
 service couchbase-server start
 
@@ -51,7 +56,7 @@ if [ $1 = -bootstrap ]; then
 	--cluster-password=$CB_PASSWORD \
 	-u $CB_USERNAME \
 	-p $CB_PASSWORD \
-        --cluster-ramsize=3000
+        --cluster-ramsize=$CLUSTER_RAM_SIZE_MB
     {{ else }}
     untilsuccessful /opt/couchbase/bin/couchbase-cli cluster-init -c $IP \
 	--cluster-init-username=$CB_USERNAME \
@@ -61,7 +66,7 @@ if [ $1 = -bootstrap ]; then
     echo "Call bucket-create"
     untilsuccessful /opt/couchbase/bin/couchbase-cli bucket-create -c $IP \
 	-u $CB_USERNAME -p $CB_PASSWORD \
-	--bucket=default --bucket-ramsize=128
+	--bucket=default --bucket-ramsize=$DEFAULT_BUCKET_RAM_SIZE_MB
 
 elif [ $1 = -join ]; then
 
