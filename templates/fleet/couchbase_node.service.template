@@ -6,7 +6,7 @@ TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 ExecStartPre=-/usr/bin/docker kill couchbase
 ExecStartPre=-/usr/bin/docker rm couchbase
-ExecStartPre=/usr/bin/docker pull tleyden5iwx/couchbase-server-{{ .CB_VERSION }}
+ExecStartPre=-/usr/bin/docker pull tleyden5iwx/couchbase-server-{{ .CB_VERSION }}
 ExecStart=/bin/bash -c 'while [ -z $(etcdctl get /services/couchbase/bootstrap_ip) ]; do sleep 1; done; BOOTSTRAP_IP=$(etcdctl get /services/couchbase/bootstrap_ip); while [ -z $(etcdctl get /services/couchbase/userpass) ]; do sleep 1; done; USERPASS=$(etcdctl get /services/couchbase/userpass); /usr/bin/docker run --name couchbase -v /var/lib/couchbase:/var/lib/couchbase --net=host tleyden5iwx/couchbase-server-{{ .CB_VERSION }} couchbase-start -join $BOOTSTRAP_IP "$COREOS_PRIVATE_IPV4" "$USERPASS"'
 ExecStop=/usr/bin/docker stop couchbase
 
