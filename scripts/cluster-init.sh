@@ -53,6 +53,17 @@ cd couchbase-server-docker/$version/fleet && ./create_node_services.sh $non_boot
 etcdctl set /services/couchbase/userpass "$userpass"
 
 # launch fleet!
-fleetctl start couchbase_bootstrap_node.service couchbase_bootstrap_node_announce.service couchbase_node.*.service
+echo "Kicking off couchbase server bootstrap node"
+fleetctl start couchbase_bootstrap_node.service couchbase_bootstrap_node_announce.service 
+
+if (( $non_bootstrap_nodes > 0 )); then 
+    echo "Kicking off $non_bootrap_nodes additional couchbase server nodes"
+    fleetctl start couchbase_node.*.service
+else 
+    echo "No additional couchbase server nodes needed, running single node system"
+fi
+
+
+
 
 
