@@ -46,18 +46,18 @@ fi
 # clone repo with fleet unit files
 git clone https://github.com/couchbaselabs/couchbase-server-docker
 
-
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
 
 # launch fleet!
 echo "Kicking off couchbase server bootstrap node"
+cd couchbase-server-docker/$version/fleet
 fleetctl start couchbase_bootstrap_node.service couchbase_bootstrap_node_announce.service 
 
 if (( $non_bootstrap_nodes > 0 )); then 
 
     # generate unit files for non-bootstrap couchbase server nodes
-    cd couchbase-server-docker/$version/fleet && ./create_node_services.sh $non_bootstrap_nodes
+    ./create_node_services.sh $non_bootstrap_nodes
 
     echo "Kicking off $non_bootrap_nodes additional couchbase server nodes"
     fleetctl start couchbase_node.*.service
