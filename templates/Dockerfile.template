@@ -6,8 +6,22 @@ ENV CB_VERSION		{{ .CB_VERSION }}
 ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
 ENV CB_PACKAGE		{{ .CB_PACKAGE }}
 
+# Install EPEL, so that we can install pip
+RUN cd /tmp && \ 
+    wget http://mirror-fpt-telecom.fpt.net/fedora/epel/6/i386/epel-release-6-8.noarch.rpm && \
+    rpm -ivh epel-release-6-8.noarch.rpm
+
+# Install yum dependencies
+RUN yum install -y \
+    hostname \
+    initscripts \
+    openssl \
+    pkgconfig \
+    python-pip \
+    tar \
+    wget 
+
 # Install couchbase
-RUN yum install -y wget pkgconfig openssl tar hostname initscripts
 RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
 
 # Put start script
