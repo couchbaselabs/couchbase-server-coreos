@@ -12,25 +12,51 @@ const (
 	TTL_NONE                 = 0
 )
 
-func main() {
+type CouchbaseCluster struct {
+	etcdClient *etcd.Client
+}
 
-	ip := "127.0.0.1"
+func (c *CouchbaseCluster) StartCouchbaseNode() error {
 
-	client := etcd.NewClient([]string{"http://127.0.0.1:4001"})
-	client.SyncCluster()
-
-	nodes := client.GetCluster()
-
-	fmt.Println("nodes: %+v", nodes)
-
-	fmt.Println("client: %v", client)
-
-	response, err := client.Create(KEY_CLUSTER_INITIAL_NODE, ip, TTL_NONE)
+	c.etcdClient = etcd.NewClient([]string{"http://127.0.0.1:4001"})
+	ok, err := c.BecomeFirstClusterNode()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	fmt.Println("response: %+v", response)
+	fmt.Printf("ok: %v", ok)
+
+	// client.SyncCluster()
+	// nodes := client.GetCluster()
+	// fmt.Printf("nodes: %+v", nodes)
+	return nil
+}
+
+func (c CouchbaseCluster) BecomeFirstClusterNode() (bool, error) {
+
+	// TODO: this needs to be passed in as cmd line arg!!
+	ip := "127.0.0.1"
+
+	response, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, ip, TTL_NONE)
+
+	fmt.Printf("response: %+v, err: %v", response, err)
+
+	if err != nil {
+		return false, err
+	}
+
+	// check the response
+
+	return true, nil
+
+}
+
+func main() {
+
+	couchbaseCluster := &CouchbaseCluster{}
+	if err := couchbaseCluster.StartCouchbaseNode(); err != nil {
+		log.Fatal(err)
+	}
 
 	/*
 
