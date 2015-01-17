@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"path"
 	"strings"
 
 	"github.com/coreos/go-etcd/etcd"
@@ -11,6 +12,7 @@ import (
 const (
 	LOCAL_ETCD_URL           = "http://127.0.0.1:4001"
 	KEY_CLUSTER_INITIAL_NODE = "cluster-initial-node"
+	KEY_NODE_STATE           = "node-state"
 	TTL_NONE                 = 0
 )
 
@@ -28,9 +30,54 @@ func (c CouchbaseCluster) CreateBucket() error {
 	return nil
 }
 
-func (c CouchbaseCluster) JoinExistingCluster() error {
-	log.Printf("JoinExistingCluster()")
+func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
+	log.Printf("JoinLiveNode()")
 	return nil
+}
+
+// Loop over list of machines in etc cluster and join
+// the first node that is up
+func (c CouchbaseCluster) JoinExistingCluster() error {
+
+	liveNodeIp, err := c.FindLiveNode()
+	if err != nil {
+		return err
+	}
+	return c.JoinLiveNode(liveNodeIp)
+
+}
+
+// Loop over list of machines in etc cluster and find
+// first live node.
+func (c CouchbaseCluster) FindLiveNode() (string, error) {
+
+	c.etcdClient.SyncCluster()
+	nodes := c.etcdClient.GetCluster()
+	for _, nodeIpAndPort := range nodes {
+		nodeIp := extractIp(nodeIpAndPort)
+		if c.IsNodeUp(nodeIp) {
+			return nodeIp, nil
+		}
+	}
+
+	return "", fmt.Errorf("No live node found")
+
+}
+
+// Check the node-state/<ip> key in etcd to see if this node is up
+func (c CouchbaseCluster) IsNodeUp(nodeIp string) bool {
+
+	key := path.Join(KEY_NODE_STATE)
+	log.Printf("key: %v", key)
+	// c.etcdClient.Get(key,
+
+	return false
+}
+
+// Given http://10.1.1.100:4001 -> 10.1.1.100
+func extractIp(nodeIpAndPort string) string {
+	// TODO
+	return nodeIpAndPort
 }
 
 func (c CouchbaseCluster) StartCouchbaseService() error {
