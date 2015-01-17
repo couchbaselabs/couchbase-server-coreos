@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os/exec"
 	"path"
 	"strings"
@@ -18,6 +20,12 @@ const (
 	TTL_NONE                    = 0
 	MAX_RETRIES_JOIN_CLUSTER    = 10
 	MAX_RETRIES_START_COUCHBASE = 3
+
+	// TODO: cli param
+	COUCHBASE_IP   = "172.17.8.101"
+	COUCHBASE_PORT = "8091"
+	ADMIN_USERNAME = "user"
+	ADMIN_PASSWORD = "passw0rd"
 )
 
 type CouchbaseCluster struct {
@@ -38,7 +46,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
 	switch success {
 	case true:
-		if err := c.ClusterInit(); err != nil {
+		if err := c.ClusterInit(COUCHBASE_IP, ADMIN_USERNAME, ADMIN_PASSWORD); err != nil {
 			return err
 		}
 		if err := c.CreateBucket(); err != nil {
@@ -189,9 +197,35 @@ func CouchbaseServiceRunning() (bool, error) {
 	return strings.Contains(string(output), "is running"), nil
 }
 
-func (c CouchbaseCluster) ClusterInit() error {
-	log.Printf("ClusterInit()")
+func (c CouchbaseCluster) ClusterInit(ip, adminUsername, adminPass string) error {
+
+	client := &http.Client{}
+
+	endpointUrl := path.Join("http://", ip, "settings/web")
+
+	data := url.Values{
+		"username": {adminUsername},
+		"password": {adminPass},
+		"port":     {COUCHBASE_PORT},
+	}
+	req, err := http.NewRequest("POST", endpointUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth("admin", "password")
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Failed to init cluster: %v", resp.StatusCode)
+	}
+
 	return nil
+
 }
 
 func (c CouchbaseCluster) CreateBucket() error {
