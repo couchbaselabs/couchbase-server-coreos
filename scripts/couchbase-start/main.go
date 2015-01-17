@@ -21,7 +21,12 @@ const (
 	MAX_RETRIES_JOIN_CLUSTER    = 10
 	MAX_RETRIES_START_COUCHBASE = 3
 
-	// TODO: cli param
+	// in order to set the username and password of a cluster
+	// you must pass these "factory default values"
+	COUCHBASE_DEFAULT_ADMIN_USERNAME = "admin"
+	COUCHBASE_DEFAULT_ADMIN_PASSWORD = "password"
+
+	// TODO: these all need to be passed in as CLI params
 	COUCHBASE_IP   = "172.17.8.101"
 	COUCHBASE_PORT = "8091"
 	ADMIN_USERNAME = "user"
@@ -29,10 +34,19 @@ const (
 )
 
 type CouchbaseCluster struct {
-	etcdClient *etcd.Client
+	etcdClient    *etcd.Client
+	couchbaseIp   string
+	couchbasePort string
+	adminUsername string
+	adminPassword string
 }
 
 func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
+
+	c.couchbaseIp = COUCHBASE_IP
+	c.couchbasePort = COUCHBASE_PORT
+	c.adminUsername = ADMIN_USERNAME
+	c.adminPassword = ADMIN_PASSWORD
 
 	c.etcdClient = etcd.NewClient([]string{LOCAL_ETCD_URL})
 	success, err := c.BecomeFirstClusterNode(nodeIp)
@@ -44,12 +58,16 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 		return err
 	}
 
+	if err := c.WaitForRestService(); err != nil {
+		return err
+	}
+
 	switch success {
 	case true:
 		if err := c.ClusterInit(COUCHBASE_IP, ADMIN_USERNAME, ADMIN_PASSWORD); err != nil {
 			return err
 		}
-		if err := c.CreateBucket(); err != nil {
+		if err := c.CreateDefaultBucket(); err != nil {
 			return err
 		}
 	case false:
@@ -148,6 +166,29 @@ func (c CouchbaseCluster) FindLiveNode() (string, error) {
 
 }
 
+func (c CouchbaseCluster) WaitForRestService() error {
+
+	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
+
+		endpointUrl := fmt.Sprintf("http://%v:%v/", c.couchbaseIp, c.couchbasePort)
+		log.Printf("Waiting for %v to be up", endpointUrl)
+		resp, err := http.Get(endpointUrl)
+		if err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode == 200 {
+				return nil
+			}
+		}
+
+		log.Printf("Not up yet, sleeping and will retry")
+		<-time.After(time.Second * 10)
+
+	}
+
+	return fmt.Errorf("Unable to connect to REST api after several attempts")
+
+}
+
 func StartCouchbaseService() error {
 
 	log.Printf("StartCouchbaseService()")
@@ -205,7 +246,7 @@ func (c CouchbaseCluster) ClusterInit(ip, adminUsername, adminPass string) error
 
 	client := &http.Client{}
 
-	endpointUrl := path.Join("http://", ip, "settings/web")
+	endpointUrl := fmt.Sprintf("http://%v:%v/settings/web", ip, COUCHBASE_PORT)
 
 	data := url.Values{
 		"username": {adminUsername},
@@ -217,12 +258,13 @@ func (c CouchbaseCluster) ClusterInit(ip, adminUsername, adminPass string) error
 		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth("admin", "password")
+
+	req.SetBasicAuth(COUCHBASE_DEFAULT_ADMIN_USERNAME, COUCHBASE_DEFAULT_ADMIN_PASSWORD)
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Failed to init cluster: %v", resp.StatusCode)
@@ -232,12 +274,28 @@ func (c CouchbaseCluster) ClusterInit(ip, adminUsername, adminPass string) error
 
 }
 
-func (c CouchbaseCluster) CreateBucket() error {
+func (c CouchbaseCluster) CreateDefaultBucket() error {
+
+	/*
+		    echo "Call bucket-create"
+		    untilsuccessful /opt/couchbase/bin/couchbase-cli bucket-create -c $IP \
+			-u $CB_USERNAME -p $CB_PASSWORD \
+			--bucket=default --bucket-ramsize=$DEFAULT_BUCKET_RAM_SIZE_MB
+
+	*/
+
 	log.Printf("CreateBucket()")
 	return nil
 }
 
 func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
+
+	/*
+		    untilsuccessful /opt/couchbase/bin/couchbase-cli server-add -c $BOOTSTRAP_IP \
+			--user=$CB_USERNAME --password=$CB_PASSWORD \
+			--server-add=$IP
+
+	*/
 	log.Printf("JoinLiveNode() called with %v", liveNodeIp)
 	return nil
 }
