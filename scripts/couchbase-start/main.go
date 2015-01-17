@@ -71,7 +71,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
 func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
 
-	response, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, nodeIp, TTL_NONE)
+	_, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, nodeIp, TTL_NONE)
 
 	if err != nil {
 		// expected error where someone beat us out
