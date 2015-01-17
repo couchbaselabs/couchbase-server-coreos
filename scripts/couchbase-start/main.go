@@ -5,6 +5,7 @@ import (
 	"log"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/coreos/go-etcd/etcd"
 )
@@ -14,6 +15,7 @@ const (
 	KEY_CLUSTER_INITIAL_NODE = "cluster-initial-node"
 	KEY_NODE_STATE           = "node-state"
 	TTL_NONE                 = 0
+	MAX_RETRIES_JOIN_CLUSTER = 10
 )
 
 type CouchbaseCluster struct {
@@ -67,15 +69,38 @@ func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
 
 }
 
-// Loop over list of machines in etc cluster and join
+// Loop over list of machines in etcd cluster and join
 // the first node that is up
 func (c CouchbaseCluster) JoinExistingCluster() error {
 
-	liveNodeIp, err := c.FindLiveNode()
-	if err != nil {
-		return err
+	log.Printf("JoinExistingCluster() called")
+
+	sleepSeconds := 0
+
+	for i := 0; i < MAX_RETRIES_JOIN_CLUSTER; i++ {
+
+		log.Printf("Calling FindLiveNode()")
+
+		liveNodeIp, err := c.FindLiveNode()
+		if err != nil {
+			return err
+		}
+
+		log.Printf("liveNodeIp: %v", liveNodeIp)
+
+		if liveNodeIp != "" {
+			return c.JoinLiveNode(liveNodeIp)
+		}
+
+		sleepSeconds += 10
+
+		log.Printf("Sleeping for %v", sleepSeconds)
+
+		<-time.After(time.Second * time.Duration(sleepSeconds))
+
 	}
-	return c.JoinLiveNode(liveNodeIp)
+
+	return fmt.Errorf("Failed to join cluster after several retries")
 
 }
 
@@ -84,32 +109,30 @@ func (c CouchbaseCluster) JoinExistingCluster() error {
 func (c CouchbaseCluster) FindLiveNode() (string, error) {
 
 	key := path.Join(KEY_NODE_STATE)
-	log.Printf("key: %v", key)
+
 	response, err := c.etcdClient.Get(key, false, false)
-	log.Printf("response: %+v, err: %v", response, err)
+	if err != nil {
+		return "", fmt.Errorf("Error getting key.  Err: %v", err)
+	}
 
 	node := response.Node
 	if node == nil {
-		return "", fmt.Errorf("No live node found.  Node == nil")
+		return "", nil
 	}
 
-	log.Printf("node: %+v", node)
-
 	if len(node.Nodes) == 0 {
-		return "", fmt.Errorf("No live node found.  Nodes is empty")
+		return "", nil
 	}
 
 	for _, subNode := range node.Nodes {
-		log.Printf("\tsubnode: %+v", subNode)
 
 		// the key will be: /node-state/172.17.8.101:8091, but we
 		// only want the last element in the path
-		// TODO: path.Split()
 		_, subNodeIp := path.Split(subNode.Key)
 		return subNodeIp, nil
 	}
 
-	return "", fmt.Errorf("No live node found")
+	return "", nil
 
 }
 
