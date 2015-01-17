@@ -83,42 +83,34 @@ func (c CouchbaseCluster) JoinExistingCluster() error {
 // first live node.
 func (c CouchbaseCluster) FindLiveNode() (string, error) {
 
-	c.etcdClient.SyncCluster()
-	nodes := c.etcdClient.GetCluster()
-	for _, nodeIpAndPort := range nodes {
-		nodeIp := extractIp(nodeIpAndPort)
-		if c.IsNodeUp(nodeIp) {
-			return nodeIp, nil
-		}
-	}
-
-	return "", fmt.Errorf("No live node found")
-
-}
-
-// Check the node-state/<ip> key in etcd to see if this node is up
-func (c CouchbaseCluster) IsNodeUp(nodeIp string) bool {
-
-	log.Printf("isNodeUp called with: %v", nodeIp)
-
 	key := path.Join(KEY_NODE_STATE)
 	log.Printf("key: %v", key)
 	response, err := c.etcdClient.Get(key, false, false)
 	log.Printf("response: %+v, err: %v", response, err)
 
 	node := response.Node
-	log.Printf("node: %+v", node)
-	for _, subNode := range node.Nodes {
-		log.Printf("\tsubnode: %+v", subNode)
+	if node == nil {
+		return "", fmt.Errorf("No live node found.  Node == nil")
 	}
 
-	return false
-}
+	log.Printf("node: %+v", node)
 
-// Given http://10.1.1.100:4001 -> 10.1.1.100
-func extractIp(nodeIpAndPort string) string {
-	// TODO
-	return nodeIpAndPort
+	if len(node.Nodes) == 0 {
+		return "", fmt.Errorf("No live node found.  Nodes is empty")
+	}
+
+	for _, subNode := range node.Nodes {
+		log.Printf("\tsubnode: %+v", subNode)
+
+		// the key will be: /node-state/172.17.8.101:8091, but we
+		// only want the last element in the path
+		// TODO: path.Split()
+		_, subNodeIp := path.Split(subNode.Key)
+		return subNodeIp, nil
+	}
+
+	return "", fmt.Errorf("No live node found")
+
 }
 
 func (c CouchbaseCluster) StartCouchbaseService() error {
@@ -137,7 +129,7 @@ func (c CouchbaseCluster) CreateBucket() error {
 }
 
 func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
-	log.Printf("JoinLiveNode()")
+	log.Printf("JoinLiveNode() called with %v", liveNodeIp)
 	return nil
 }
 
