@@ -197,6 +197,10 @@ func CouchbaseServiceRunning() (bool, error) {
 	return strings.Contains(string(output), "is running"), nil
 }
 
+// Set the username and password for the cluster.  The same as calling:
+// $ couchbase-cli cluster-init ..
+//
+// Docs: http://docs.couchbase.com/admin/admin/REST/rest-node-set-username.html
 func (c CouchbaseCluster) ClusterInit(ip, adminUsername, adminPass string) error {
 
 	client := &http.Client{}
