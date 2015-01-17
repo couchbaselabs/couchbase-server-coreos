@@ -64,7 +64,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
 	switch success {
 	case true:
-		if err := c.ClusterInit(COUCHBASE_IP, ADMIN_USERNAME, ADMIN_PASSWORD); err != nil {
+		if err := c.ClusterInit(); err != nil {
 			return err
 		}
 		if err := c.CreateDefaultBucket(); err != nil {
@@ -243,16 +243,16 @@ func CouchbaseServiceRunning() (bool, error) {
 // $ couchbase-cli cluster-init ..
 //
 // Docs: http://docs.couchbase.com/admin/admin/REST/rest-node-set-username.html
-func (c CouchbaseCluster) ClusterInit(ip, adminUsername, adminPass string) error {
+func (c CouchbaseCluster) ClusterInit() error {
 
 	client := &http.Client{}
 
-	endpointUrl := fmt.Sprintf("http://%v:%v/settings/web", ip, COUCHBASE_PORT)
+	endpointUrl := fmt.Sprintf("http://%v:%v/settings/web", c.couchbaseIp, c.couchbasePort)
 
 	data := url.Values{
-		"username": {adminUsername},
-		"password": {adminPass},
-		"port":     {COUCHBASE_PORT},
+		"username": {c.adminUsername},
+		"password": {c.adminPassword},
+		"port":     {c.couchbasePort},
 	}
 	req, err := http.NewRequest("POST", endpointUrl, strings.NewReader(data.Encode()))
 	if err != nil {
