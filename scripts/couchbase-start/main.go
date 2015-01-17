@@ -144,10 +144,10 @@ func StartCouchbaseService() error {
 
 	log.Printf("StartCouchbaseService()")
 
-	// call "service couchbase-server start"
-	cmd := exec.Command("service", "couchbase-server", "start")
-
 	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
+
+		// call "service couchbase-server start"
+		cmd := exec.Command("service", "couchbase-server", "start")
 
 		if err := cmd.Run(); err != nil {
 			log.Printf("Running command returned error: %v", err)
