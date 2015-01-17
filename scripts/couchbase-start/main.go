@@ -171,11 +171,12 @@ func (c CouchbaseCluster) WaitForRestService() error {
 	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
 
 		endpointUrl := fmt.Sprintf("http://%v:%v/", c.couchbaseIp, c.couchbasePort)
-		log.Printf("Waiting for %v to be up", endpointUrl)
+		log.Printf("Waiting for REST service at %v to be up", endpointUrl)
 		resp, err := http.Get(endpointUrl)
 		if err == nil {
 			defer resp.Body.Close()
 			if resp.StatusCode == 200 {
+				log.Printf("REST service appears to be up")
 				return nil
 			}
 		}
