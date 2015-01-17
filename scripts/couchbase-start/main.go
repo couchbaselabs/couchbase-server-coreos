@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/coreos/go-etcd/etcd"
 )
 
 const (
+	LOCAL_ETCD_URL           = "http://127.0.0.1:4001"
 	KEY_CLUSTER_INITIAL_NODE = "cluster-initial-node"
 	TTL_NONE                 = 0
 )
@@ -16,45 +18,84 @@ type CouchbaseCluster struct {
 	etcdClient *etcd.Client
 }
 
-func (c *CouchbaseCluster) StartCouchbaseNode() error {
+func (c CouchbaseCluster) ClusterInit() error {
+	log.Printf("ClusterInit()")
+	return nil
+}
 
-	c.etcdClient = etcd.NewClient([]string{"http://127.0.0.1:4001"})
-	ok, err := c.BecomeFirstClusterNode()
+func (c CouchbaseCluster) CreateBucket() error {
+	log.Printf("CreateBucket()")
+	return nil
+}
+
+func (c CouchbaseCluster) JoinExistingCluster() error {
+	log.Printf("JoinExistingCluster()")
+	return nil
+}
+
+func (c CouchbaseCluster) StartCouchbaseService() error {
+	log.Printf("StartCouchbaseService()")
+	return nil
+}
+
+func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
+
+	c.etcdClient = etcd.NewClient([]string{LOCAL_ETCD_URL})
+	success, err := c.BecomeFirstClusterNode(nodeIp)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("ok: %v", ok)
+	c.StartCouchbaseService()
+
+	switch success {
+	case true:
+		if err := c.ClusterInit(); err != nil {
+			return err
+		}
+		if err := c.CreateBucket(); err != nil {
+			return err
+		}
+	case false:
+		if err := c.JoinExistingCluster(); err != nil {
+			return err
+		}
+	}
 
 	// client.SyncCluster()
 	// nodes := client.GetCluster()
 	// fmt.Printf("nodes: %+v", nodes)
 	return nil
+
 }
 
-func (c CouchbaseCluster) BecomeFirstClusterNode() (bool, error) {
+func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
 
-	// TODO: this needs to be passed in as cmd line arg!!
-	ip := "127.0.0.1"
+	response, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, nodeIp, TTL_NONE)
 
-	response, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, ip, TTL_NONE)
-
-	fmt.Printf("response: %+v, err: %v", response, err)
+	fmt.Printf("response: %+v, err: %+v", response, err)
 
 	if err != nil {
+		// expected error where someone beat us out
+		if strings.Contains(err.Error(), "Key already exists") {
+			return false, nil
+		}
+		// otherwise, unexpected error
 		return false, err
 	}
 
-	// check the response
-
+	// no error must mean that were were able to create the key
 	return true, nil
 
 }
 
 func main() {
 
+	// TODO: this needs to be passed in as cmd line arg!!
+	ip := "127.0.0.1"
+
 	couchbaseCluster := &CouchbaseCluster{}
-	if err := couchbaseCluster.StartCouchbaseNode(); err != nil {
+	if err := couchbaseCluster.StartCouchbaseNode(ip); err != nil {
 		log.Fatal(err)
 	}
 
