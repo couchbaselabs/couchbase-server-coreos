@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -11,11 +12,12 @@ import (
 )
 
 const (
-	LOCAL_ETCD_URL           = "http://127.0.0.1:4001"
-	KEY_CLUSTER_INITIAL_NODE = "cluster-initial-node"
-	KEY_NODE_STATE           = "node-state"
-	TTL_NONE                 = 0
-	MAX_RETRIES_JOIN_CLUSTER = 10
+	LOCAL_ETCD_URL              = "http://127.0.0.1:4001"
+	KEY_CLUSTER_INITIAL_NODE    = "cluster-initial-node"
+	KEY_NODE_STATE              = "node-state"
+	TTL_NONE                    = 0
+	MAX_RETRIES_JOIN_CLUSTER    = 10
+	MAX_RETRIES_START_COUCHBASE = 3
 )
 
 type CouchbaseCluster struct {
@@ -30,7 +32,9 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 		return err
 	}
 
-	c.StartCouchbaseService()
+	if err := StartCouchbaseService(); err != nil {
+		return err
+	}
 
 	switch success {
 	case true:
@@ -136,9 +140,53 @@ func (c CouchbaseCluster) FindLiveNode() (string, error) {
 
 }
 
-func (c CouchbaseCluster) StartCouchbaseService() error {
+func StartCouchbaseService() error {
+
 	log.Printf("StartCouchbaseService()")
-	return nil
+
+	// call "service couchbase-server start"
+	cmd := exec.Command("service", "couchbase-server", "start")
+
+	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
+
+		if err := cmd.Run(); err != nil {
+			log.Printf("Running command returned error: %v", err)
+			return err
+		}
+
+		running, err := CouchbaseServiceRunning()
+		if err != nil {
+			return err
+		}
+		if running {
+			log.Printf("Couchbase service running")
+			return nil
+		}
+
+		log.Printf("Couchbase service not running, sleep and try again")
+
+		<-time.After(time.Second * 10)
+
+	}
+
+	return fmt.Errorf("Unable to start couchbase service after several retries")
+
+}
+
+func CouchbaseServiceRunning() (bool, error) {
+
+	cmd := exec.Command("service", "couchbase-server", "status")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// service x status returns a non-zero exit code if
+		// the service is not running, which causes cmd.CombinedOutput
+		// to return an error.   however, absorb the error and turn it
+		// into a "not running" signal rather than propagating an error.
+		return false, nil
+	}
+	log.Printf("Checking status returned output: %v", string(output))
+
+	return strings.Contains(string(output), "is running"), nil
 }
 
 func (c CouchbaseCluster) ClusterInit() error {
