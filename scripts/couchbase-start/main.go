@@ -77,9 +77,14 @@ func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
 
 	if err != nil {
 		// expected error where someone beat us out
+		fmt.Printf("err.Error(): %v", err.Error())
 		if strings.Contains(err.Error(), "Key already exists") {
+			fmt.Printf("strings.Contains == true")
 			return false, nil
+		} else {
+			fmt.Printf("strings.Contains == false")
 		}
+
 		// otherwise, unexpected error
 		return false, err
 	}
