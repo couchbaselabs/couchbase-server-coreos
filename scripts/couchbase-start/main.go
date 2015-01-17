@@ -73,16 +73,10 @@ func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
 
 	response, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, nodeIp, TTL_NONE)
 
-	fmt.Printf("response: %+v, err: %+v", response, err)
-
 	if err != nil {
 		// expected error where someone beat us out
-		fmt.Printf("err.Error(): %v", err.Error())
 		if strings.Contains(err.Error(), "Key already exists") {
-			fmt.Printf("strings.Contains == true")
 			return false, nil
-		} else {
-			fmt.Printf("strings.Contains == false")
 		}
 
 		// otherwise, unexpected error
