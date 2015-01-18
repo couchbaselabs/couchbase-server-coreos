@@ -154,19 +154,29 @@ func (c CouchbaseCluster) FindLiveNode() (string, error) {
 	}
 
 	node := response.Node
+
+	log.Printf("node: %+v", node)
+
 	if node == nil {
+		log.Printf("node is nil, returning")
 		return "", nil
 	}
 
 	if len(node.Nodes) == 0 {
+		log.Printf("len(node.Nodes) == 0, returning")
 		return "", nil
 	}
+
+	log.Printf("node.Nodes: %+v", node.Nodes)
 
 	for _, subNode := range node.Nodes {
 
 		// the key will be: /node-state/172.17.8.101:8091, but we
 		// only want the last element in the path
 		_, subNodeIp := path.Split(subNode.Key)
+
+		log.Printf("subNodeIp: %v", subNodeIp)
+
 		return subNodeIp, nil
 	}
 
