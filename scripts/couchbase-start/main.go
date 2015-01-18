@@ -430,7 +430,7 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return fmt.Errorf("Failed to POST to %v.  Status code: %v", endpointUrl, resp.StatusCode)
 	}
 
