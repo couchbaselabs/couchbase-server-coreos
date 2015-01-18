@@ -70,6 +70,8 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
 	switch success {
 	case true:
+		log.Printf("We became first cluster node, init cluster and bucket")
+
 		if err := c.ClusterInit(); err != nil {
 			return err
 		}
@@ -82,7 +84,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 		}
 	}
 
-	return nil
+	select {} // block forever
 
 }
 
