@@ -29,8 +29,8 @@ const (
 	// TODO: these all need to be passed in as CLI params
 	LOCAL_COUCHBASE_IP            = "172.17.8.101"
 	LOCAL_COUCHBASE_PORT          = "8091"
-	ADMIN_USERNAME                = "user"
-	ADMIN_PASSWORD                = "passw0rd"
+	ADMIN_USERNAME                = "admin"
+	ADMIN_PASSWORD                = "password"
 	DEFAULT_BUCKET_RAM_MB         = "256"
 	DEFAULT_BUCKET_REPLICA_NUMBER = "2"
 )
