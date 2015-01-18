@@ -426,6 +426,10 @@ func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 		"rebalance",
 		"-c",
 		ipPortExistingClusterNode,
+		"-u",
+		c.adminUsername,
+		"-p",
+		c.adminPassword,
 		fmt.Sprintf("--server-add=%v", ipPortNodeBeingAdded),
 		fmt.Sprintf("--server-add-username=%v", c.adminUsername),
 		fmt.Sprintf("--server-add-password=%v", c.adminPassword),
@@ -434,11 +438,11 @@ func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		log.Printf("Running command returned error: %v.  Combined output: %v", err, output)
+		log.Printf("Running command returned error: %v.  Combined output: %v", err, string(output))
 		return err
 	}
 
-	log.Printf("output: %v", output)
+	log.Printf("output: %v", string(output))
 
 	return nil
 
