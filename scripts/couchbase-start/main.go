@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path"
 	"strings"
@@ -27,7 +28,6 @@ const (
 	COUCHBASE_DEFAULT_ADMIN_PASSWORD = "password"
 
 	// TODO: these all need to be passed in as CLI params
-	LOCAL_COUCHBASE_IP            = "172.17.8.101"
 	LOCAL_COUCHBASE_PORT          = "8091"
 	ADMIN_USERNAME                = "admin"
 	ADMIN_PASSWORD                = "password"
@@ -47,7 +47,6 @@ type CouchbaseCluster struct {
 
 func (c *CouchbaseCluster) StartCouchbaseNode() error {
 
-	c.localCouchbaseIp = LOCAL_COUCHBASE_IP
 	c.localCouchbasePort = LOCAL_COUCHBASE_PORT
 	c.adminUsername = ADMIN_USERNAME
 	c.adminPassword = ADMIN_PASSWORD
@@ -322,7 +321,7 @@ func (c CouchbaseCluster) AddNode(liveNodeIp string) error {
 
 func (c CouchbaseCluster) AddNodeAndRebalanceWhenReady(liveNodeIp string) error {
 
-	log.Printf("RebalanceWhenReady()")
+	log.Printf("AddNodeAndRebalanceWhenReady()")
 
 	numSecondsToSleep := 0
 
@@ -343,6 +342,9 @@ func (c CouchbaseCluster) AddNodeAndRebalanceWhenReady(liveNodeIp string) error 
 
 			continue
 		case false:
+
+			log.Printf("No rebalance in progress")
+
 			return c.AddNodeAndRebalance(liveNodeIp)
 		}
 
@@ -405,6 +407,8 @@ func (c CouchbaseCluster) getJsonData(endpointUrl string, into interface{}) erro
 
 func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 
+	log.Printf("AddNodeAndRebalance()")
+
 	// TODO: switch to REST API
 	// The REST api for rebalancing looks more complicated, so I'll loop back to it
 	// curl -v -X -u admin:password POST 'http://192.168.0.77:8091/controller/rebalance' \
@@ -413,6 +417,9 @@ func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 	liveNodePort := c.localCouchbasePort // TODO: we should be getting this from etcd
 	ipPortExistingClusterNode := fmt.Sprintf("%v:%v", liveNodeIp, liveNodePort)
 	ipPortNodeBeingAdded := fmt.Sprintf("%v:%v", c.localCouchbaseIp, c.localCouchbasePort)
+
+	log.Printf("ipPortExistingClusterNode: %v", ipPortExistingClusterNode)
+	log.Printf("ipPortNodeBeingAdded: %v", ipPortNodeBeingAdded)
 
 	cmd := exec.Command(
 		"couchbase-cli",
@@ -424,10 +431,14 @@ func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 		fmt.Sprintf("--server-add-password=%v", c.adminPassword),
 	)
 
-	if err := cmd.Run(); err != nil {
-		log.Printf("Running command returned error: %v", err)
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		log.Printf("Running command returned error: %v.  Combined output: %v", err, output)
 		return err
 	}
+
+	log.Printf("output: %v", output)
 
 	return nil
 
@@ -464,7 +475,13 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 
 func main() {
 
+	if len(os.Args) < 2 {
+		log.Fatal(fmt.Errorf("You must pass the ip of this node as an arg"))
+	}
+
 	couchbaseCluster := &CouchbaseCluster{}
+	couchbaseCluster.localCouchbaseIp = os.Args[1]
+
 	if err := couchbaseCluster.StartCouchbaseNode(); err != nil {
 		log.Fatal(err)
 	}
