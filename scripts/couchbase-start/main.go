@@ -359,7 +359,7 @@ func (c CouchbaseCluster) IsRebalancing(liveNodeIp string) (bool, error) {
 	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default/rebalanceProgress", liveNodeIp, liveNodePort)
 
 	jsonMap := map[string]interface{}{}
-	if err := getJsonData(endpointUrl, &jsonMap); err != nil {
+	if err := c.getJsonData(endpointUrl, &jsonMap); err != nil {
 		return true, err
 	}
 
@@ -377,18 +377,30 @@ func (c CouchbaseCluster) IsRebalancing(liveNodeIp string) (bool, error) {
 
 }
 
-func getJsonData(u string, into interface{}) error {
-	res, err := http.Get(u)
+func (c CouchbaseCluster) getJsonData(endpointUrl string, into interface{}) error {
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", endpointUrl, nil)
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return fmt.Errorf("Non-200 response from: %v", u)
+
+	req.SetBasicAuth(c.adminUsername, c.adminPassword)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return fmt.Errorf("Failed to GET %v.  Status code: %v", endpointUrl, resp.StatusCode)
 	}
 
-	d := json.NewDecoder(res.Body)
+	d := json.NewDecoder(resp.Body)
 	return d.Decode(into)
+
 }
 
 func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
