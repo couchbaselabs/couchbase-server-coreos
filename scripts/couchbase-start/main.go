@@ -27,18 +27,22 @@ const (
 	COUCHBASE_DEFAULT_ADMIN_PASSWORD = "password"
 
 	// TODO: these all need to be passed in as CLI params
-	COUCHBASE_IP   = "172.17.8.101"
-	COUCHBASE_PORT = "8091"
-	ADMIN_USERNAME = "user"
-	ADMIN_PASSWORD = "passw0rd"
+	COUCHBASE_IP                  = "172.17.8.101"
+	COUCHBASE_PORT                = "8091"
+	ADMIN_USERNAME                = "user"
+	ADMIN_PASSWORD                = "passw0rd"
+	DEFAULT_BUCKET_RAM_MB         = "256"
+	DEFAULT_BUCKET_REPLICA_NUMBER = "2"
 )
 
 type CouchbaseCluster struct {
-	etcdClient    *etcd.Client
-	couchbaseIp   string
-	couchbasePort string
-	adminUsername string
-	adminPassword string
+	etcdClient                 *etcd.Client
+	couchbaseIp                string
+	couchbasePort              string
+	adminUsername              string
+	adminPassword              string
+	defaultBucketRamQuotaMB    string
+	defaultBucketReplicaNumber string
 }
 
 func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
@@ -47,6 +51,8 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 	c.couchbasePort = COUCHBASE_PORT
 	c.adminUsername = ADMIN_USERNAME
 	c.adminPassword = ADMIN_PASSWORD
+	c.defaultBucketRamQuotaMB = DEFAULT_BUCKET_RAM_MB
+	c.defaultBucketReplicaNumber = DEFAULT_BUCKET_REPLICA_NUMBER
 
 	c.etcdClient = etcd.NewClient([]string{LOCAL_ETCD_URL})
 	success, err := c.BecomeFirstClusterNode(nodeIp)
@@ -67,10 +73,12 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 		if err := c.ClusterInit(); err != nil {
 			return err
 		}
+		// TODO
 		if err := c.CreateDefaultBucket(); err != nil {
 			return err
 		}
 	case false:
+		// TODO - JoinLiveNode
 		if err := c.JoinExistingCluster(); err != nil {
 			return err
 		}
@@ -245,8 +253,6 @@ func CouchbaseServiceRunning() (bool, error) {
 // Docs: http://docs.couchbase.com/admin/admin/REST/rest-node-set-username.html
 func (c CouchbaseCluster) ClusterInit() error {
 
-	client := &http.Client{}
-
 	endpointUrl := fmt.Sprintf("http://%v:%v/settings/web", c.couchbaseIp, c.couchbasePort)
 
 	data := url.Values{
@@ -254,13 +260,44 @@ func (c CouchbaseCluster) ClusterInit() error {
 		"password": {c.adminPassword},
 		"port":     {c.couchbasePort},
 	}
+
+	return c.POST(true, endpointUrl, data)
+
+}
+
+func (c CouchbaseCluster) CreateDefaultBucket() error {
+
+	log.Printf("CreateDefaultBucket()")
+
+	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default/buckets", c.couchbaseIp, c.couchbasePort)
+
+	data := url.Values{
+		"name":          {"default"},
+		"ramQuotaMB":    {c.defaultBucketRamQuotaMB},
+		"authType":      {"none"},
+		"replicaNumber": {c.defaultBucketReplicaNumber},
+		"proxyPort":     {"11215"},
+	}
+
+	return c.POST(false, endpointUrl, data)
+
+}
+
+func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data url.Values) error {
+
+	client := &http.Client{}
+
 	req, err := http.NewRequest("POST", endpointUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if defaultAdminCreds {
+		req.SetBasicAuth(COUCHBASE_DEFAULT_ADMIN_USERNAME, COUCHBASE_DEFAULT_ADMIN_PASSWORD)
+	} else {
+		req.SetBasicAuth(c.adminUsername, c.adminPassword)
+	}
 
-	req.SetBasicAuth(COUCHBASE_DEFAULT_ADMIN_USERNAME, COUCHBASE_DEFAULT_ADMIN_PASSWORD)
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -268,25 +305,11 @@ func (c CouchbaseCluster) ClusterInit() error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Failed to init cluster: %v", resp.StatusCode)
+		return fmt.Errorf("Failed to POST to %v.  Status code: %v", endpointUrl, resp.StatusCode)
 	}
 
 	return nil
 
-}
-
-func (c CouchbaseCluster) CreateDefaultBucket() error {
-
-	/*
-		    echo "Call bucket-create"
-		    untilsuccessful /opt/couchbase/bin/couchbase-cli bucket-create -c $IP \
-			-u $CB_USERNAME -p $CB_PASSWORD \
-			--bucket=default --bucket-ramsize=$DEFAULT_BUCKET_RAM_SIZE_MB
-
-	*/
-
-	log.Printf("CreateBucket()")
-	return nil
 }
 
 func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
