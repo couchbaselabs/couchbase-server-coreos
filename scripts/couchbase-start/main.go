@@ -12,12 +12,10 @@ import (
 	"time"
 
 	"github.com/coreos/go-etcd/etcd"
-	"github.com/dustin/httputil"
 )
 
 const (
 	LOCAL_ETCD_URL              = "http://127.0.0.1:4001"
-	KEY_CLUSTER_INITIAL_NODE    = "cluster-initial-node"
 	KEY_NODE_STATE              = "node-state"
 	TTL_NONE                    = 0
 	MAX_RETRIES_JOIN_CLUSTER    = 10
@@ -90,7 +88,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
 func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
 
-	_, err := c.etcdClient.Create(KEY_CLUSTER_INITIAL_NODE, nodeIp, TTL_NONE)
+	_, err := c.etcdClient.Create(KEY_NODE_STATE, nodeIp, TTL_NONE)
 
 	if err != nil {
 		// expected error where someone beat us out
@@ -374,7 +372,7 @@ func getJsonData(u string, into interface{}) error {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return httputil.HTTPError(res)
+		return fmt.Errorf("Non-200 response from: %v", u)
 	}
 
 	d := json.NewDecoder(res.Body)
