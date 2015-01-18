@@ -16,7 +16,7 @@ import (
 
 const (
 	LOCAL_ETCD_URL              = "http://127.0.0.1:4001"
-	KEY_NODE_STATE              = "node-state"
+	KEY_NODE_STATE              = "couchbase-node-state"
 	TTL_NONE                    = 0
 	MAX_RETRIES_JOIN_CLUSTER    = 10
 	MAX_RETRIES_START_COUCHBASE = 3
