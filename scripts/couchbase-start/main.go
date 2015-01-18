@@ -45,7 +45,7 @@ type CouchbaseCluster struct {
 	defaultBucketReplicaNumber string
 }
 
-func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
+func (c *CouchbaseCluster) StartCouchbaseNode() error {
 
 	c.localCouchbaseIp = LOCAL_COUCHBASE_IP
 	c.localCouchbasePort = LOCAL_COUCHBASE_PORT
@@ -55,7 +55,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 	c.defaultBucketReplicaNumber = DEFAULT_BUCKET_REPLICA_NUMBER
 
 	c.etcdClient = etcd.NewClient([]string{LOCAL_ETCD_URL})
-	success, err := c.BecomeFirstClusterNode(nodeIp)
+	success, err := c.BecomeFirstClusterNode()
 	if err != nil {
 		return err
 	}
@@ -88,9 +88,9 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
 }
 
-func (c CouchbaseCluster) BecomeFirstClusterNode(nodeIp string) (bool, error) {
+func (c CouchbaseCluster) BecomeFirstClusterNode() (bool, error) {
 
-	_, err := c.etcdClient.Create(KEY_NODE_STATE, nodeIp, TTL_NONE)
+	_, err := c.etcdClient.CreateDir(KEY_NODE_STATE, TTL_NONE)
 
 	if err != nil {
 		// expected error where someone beat us out
@@ -452,11 +452,8 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 
 func main() {
 
-	// TODO: this needs to be passed in as cmd line arg!!
-	ip := "127.0.0.1"
-
 	couchbaseCluster := &CouchbaseCluster{}
-	if err := couchbaseCluster.StartCouchbaseNode(ip); err != nil {
+	if err := couchbaseCluster.StartCouchbaseNode(); err != nil {
 		log.Fatal(err)
 	}
 
