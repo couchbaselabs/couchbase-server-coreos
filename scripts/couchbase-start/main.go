@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-etcd/etcd"
+	"github.com/dustin/httputil"
 )
 
 const (
@@ -27,8 +29,8 @@ const (
 	COUCHBASE_DEFAULT_ADMIN_PASSWORD = "password"
 
 	// TODO: these all need to be passed in as CLI params
-	COUCHBASE_IP                  = "172.17.8.101"
-	COUCHBASE_PORT                = "8091"
+	LOCAL_COUCHBASE_IP            = "172.17.8.101"
+	LOCAL_COUCHBASE_PORT          = "8091"
 	ADMIN_USERNAME                = "user"
 	ADMIN_PASSWORD                = "passw0rd"
 	DEFAULT_BUCKET_RAM_MB         = "256"
@@ -37,8 +39,8 @@ const (
 
 type CouchbaseCluster struct {
 	etcdClient                 *etcd.Client
-	couchbaseIp                string
-	couchbasePort              string
+	localCouchbaseIp           string
+	localCouchbasePort         string
 	adminUsername              string
 	adminPassword              string
 	defaultBucketRamQuotaMB    string
@@ -47,8 +49,8 @@ type CouchbaseCluster struct {
 
 func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 
-	c.couchbaseIp = COUCHBASE_IP
-	c.couchbasePort = COUCHBASE_PORT
+	c.localCouchbaseIp = LOCAL_COUCHBASE_IP
+	c.localCouchbasePort = LOCAL_COUCHBASE_PORT
 	c.adminUsername = ADMIN_USERNAME
 	c.adminPassword = ADMIN_PASSWORD
 	c.defaultBucketRamQuotaMB = DEFAULT_BUCKET_RAM_MB
@@ -73,12 +75,10 @@ func (c *CouchbaseCluster) StartCouchbaseNode(nodeIp string) error {
 		if err := c.ClusterInit(); err != nil {
 			return err
 		}
-		// TODO
 		if err := c.CreateDefaultBucket(); err != nil {
 			return err
 		}
 	case false:
-		// TODO - JoinLiveNode
 		if err := c.JoinExistingCluster(); err != nil {
 			return err
 		}
@@ -178,7 +178,7 @@ func (c CouchbaseCluster) WaitForRestService() error {
 
 	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
 
-		endpointUrl := fmt.Sprintf("http://%v:%v/", c.couchbaseIp, c.couchbasePort)
+		endpointUrl := fmt.Sprintf("http://%v:%v/", c.localCouchbaseIp, c.localCouchbasePort)
 		log.Printf("Waiting for REST service at %v to be up", endpointUrl)
 		resp, err := http.Get(endpointUrl)
 		if err == nil {
@@ -253,12 +253,12 @@ func CouchbaseServiceRunning() (bool, error) {
 // Docs: http://docs.couchbase.com/admin/admin/REST/rest-node-set-username.html
 func (c CouchbaseCluster) ClusterInit() error {
 
-	endpointUrl := fmt.Sprintf("http://%v:%v/settings/web", c.couchbaseIp, c.couchbasePort)
+	endpointUrl := fmt.Sprintf("http://%v:%v/settings/web", c.localCouchbaseIp, c.localCouchbasePort)
 
 	data := url.Values{
 		"username": {c.adminUsername},
 		"password": {c.adminPassword},
-		"port":     {c.couchbasePort},
+		"port":     {c.localCouchbasePort},
 	}
 
 	return c.POST(true, endpointUrl, data)
@@ -269,7 +269,7 @@ func (c CouchbaseCluster) CreateDefaultBucket() error {
 
 	log.Printf("CreateDefaultBucket()")
 
-	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default/buckets", c.couchbaseIp, c.couchbasePort)
+	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default/buckets", c.localCouchbaseIp, c.localCouchbasePort)
 
 	data := url.Values{
 		"name":          {"default"},
@@ -280,6 +280,134 @@ func (c CouchbaseCluster) CreateDefaultBucket() error {
 	}
 
 	return c.POST(false, endpointUrl, data)
+
+}
+
+func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
+
+	log.Printf("JoinLiveNode() called with %v", liveNodeIp)
+
+	if err := c.AddNodeAndRebalanceWhenReady(liveNodeIp); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c CouchbaseCluster) AddNode(liveNodeIp string) error {
+
+	log.Printf("AddNode()")
+
+	endpointUrl := fmt.Sprintf("http://%v:%v/controller/addNode", c.localCouchbaseIp, c.localCouchbasePort)
+
+	data := url.Values{
+		"hostname": {liveNodeIp},
+		"user":     {c.adminUsername},
+		"password": {c.adminPassword},
+	}
+
+	return c.POST(false, endpointUrl, data)
+
+}
+
+func (c CouchbaseCluster) AddNodeAndRebalanceWhenReady(liveNodeIp string) error {
+
+	log.Printf("RebalanceWhenReady()")
+
+	numSecondsToSleep := 0
+
+	for i := 0; i < MAX_RETRIES_JOIN_CLUSTER; i++ {
+
+		numSecondsToSleep += 100
+
+		isRebalancing, err := c.IsRebalancing(liveNodeIp)
+		if err != nil {
+			return err
+		}
+
+		switch isRebalancing {
+		case true:
+			log.Printf("Rebalance in progress, waiting ..")
+
+			<-time.After(time.Second * time.Duration(numSecondsToSleep))
+
+			continue
+		case false:
+			return c.AddNodeAndRebalance(liveNodeIp)
+		}
+
+	}
+
+	return fmt.Errorf("Unable to rebalance after several attempts")
+
+}
+
+func (c CouchbaseCluster) IsRebalancing(liveNodeIp string) (bool, error) {
+
+	liveNodePort := c.localCouchbasePort // TODO: we should be getting this from etcd
+
+	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default/rebalanceProgress", liveNodeIp, liveNodePort)
+
+	jsonMap := map[string]interface{}{}
+	if err := getJsonData(endpointUrl, &jsonMap); err != nil {
+		return true, err
+	}
+
+	rawStatus := jsonMap["status"]
+	str, ok := rawStatus.(string)
+	if !ok {
+		return true, fmt.Errorf("Unexepected type in status field in json")
+	}
+
+	if str == "none" {
+		return false, nil
+	}
+
+	return true, nil
+
+}
+
+func getJsonData(u string, into interface{}) error {
+	res, err := http.Get(u)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return httputil.HTTPError(res)
+	}
+
+	d := json.NewDecoder(res.Body)
+	return d.Decode(into)
+}
+
+func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
+
+	// TODO: switch to REST API
+	// The REST api for rebalancing looks more complicated, so I'll loop back to it
+	// curl -v -X -u admin:password POST 'http://192.168.0.77:8091/controller/rebalance' \
+	// -d 'ejectedNodes=&knownNodes=ns_1%40192.168.0.77%2Cns_1%40192.168.0.56'
+
+	liveNodePort := c.localCouchbasePort // TODO: we should be getting this from etcd
+	ipPortExistingClusterNode := fmt.Sprintf("%v:%v", liveNodeIp, liveNodePort)
+	ipPortNodeBeingAdded := fmt.Sprintf("%v:%v", c.localCouchbaseIp, c.localCouchbasePort)
+
+	cmd := exec.Command(
+		"couchbase-cli",
+		"rebalance",
+		"-c",
+		ipPortExistingClusterNode,
+		fmt.Sprintf("--server-add=%v", ipPortNodeBeingAdded),
+		fmt.Sprintf("--server-add-username=%v", c.adminUsername),
+		fmt.Sprintf("--server-add-password=%v", c.adminPassword),
+	)
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("Running command returned error: %v", err)
+		return err
+	}
+
+	return nil
 
 }
 
@@ -310,18 +438,6 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 
 	return nil
 
-}
-
-func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
-
-	/*
-		    untilsuccessful /opt/couchbase/bin/couchbase-cli server-add -c $BOOTSTRAP_IP \
-			--user=$CB_USERNAME --password=$CB_PASSWORD \
-			--server-add=$IP
-
-	*/
-	log.Printf("JoinLiveNode() called with %v", liveNodeIp)
-	return nil
 }
 
 func main() {
