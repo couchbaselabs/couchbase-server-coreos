@@ -407,6 +407,16 @@ func (c CouchbaseCluster) getJsonData(endpointUrl string, into interface{}) erro
 
 func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 
+	// TODO: this should first check if the node _needs_ to be added,
+	// since otherwise it will fail with:
+	//
+	//   2015/01/17 15:21:01 Running command returned error: exit status 2.
+	//   Combined output: ERROR: unable to server-add 172.17.8.101:8091 (400) Bad Request
+	//   [u'Prepare join failed. Node is already part of cluster.']
+	//
+	// We will run into this error if we mount /opt/couchbase/data instead of current
+	// appraoch.
+
 	log.Printf("AddNodeAndRebalance()")
 
 	// TODO: switch to REST API
@@ -443,6 +453,11 @@ func (c CouchbaseCluster) AddNodeAndRebalance(liveNodeIp string) error {
 	}
 
 	log.Printf("output: %v", string(output))
+
+	// getting weird error:
+	// close failed in file object destructor:
+	// Error in sys.excepthook: [empty]
+	// Original exception was: [empty]
 
 	return nil
 
