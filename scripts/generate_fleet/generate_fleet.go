@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -44,6 +45,10 @@ func main() {
 
 		// create a writer that is going to write to <dest dir>/templateFile
 		_, filename := filepath.Split(templateFile)
+
+		// strip off .template from filename
+		filename = strings.Replace(filename, ".template", "", -1)
+
 		destFile := path.Join(destDir, filename)
 
 		f, err := os.Create(destFile)
