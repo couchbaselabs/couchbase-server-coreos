@@ -498,6 +498,8 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 //   - publishes the fact that we are alive into etcd.
 func (c CouchbaseCluster) EventLoop() {
 
+	log.Printf("EventLoop()")
+
 	var lastErr error
 
 	for {
@@ -511,6 +513,7 @@ func (c CouchbaseCluster) EventLoop() {
 			log.Printf(msg)
 			lastErr = err
 		} else {
+			log.Printf("Published node state to etcd")
 			// if we had an error earlier, but it's now resolved,
 			// lets log that fact
 			if lastErr != nil {
@@ -535,6 +538,8 @@ func (c CouchbaseCluster) PublishNodeStateEtcd(ttlSeconds uint64) error {
 	// the etcd key to use, ie: /couchbase-node-state/<our ip>
 	// TODO: maybe this should be ip:port
 	key := path.Join(KEY_NODE_STATE, c.localCouchbaseIp)
+
+	log.Printf("Publish node-state to key: %v", key)
 
 	_, err := c.etcdClient.Create(key, "up", ttlSeconds)
 
