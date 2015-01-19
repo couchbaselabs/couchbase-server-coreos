@@ -38,8 +38,8 @@ RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
 # (you would think installing couchbase would do this for you)
 # I haven't figured out how to append to $PATH, hence I'm doing it this way
 RUN cp -r /opt/couchbase/bin/* /usr/local/bin && \
-    cp /opt/couchbase/bin/tools/* /usr/local/bin && \
-    cp /opt/couchbase/bin/install/* /usr/local/bin
+    cp -r /opt/couchbase/bin/tools/* /usr/local/bin && \
+    cp -r /opt/couchbase/bin/install/* /usr/local/bin
 
 # Download, build and install start script
 RUN go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \ 
