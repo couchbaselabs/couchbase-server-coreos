@@ -10,12 +10,16 @@ ENV GOPATH /opt/go
 # Create directory to hold go code
 RUN mkdir -p $GOPATH
 
-# Install EPEL, so that we can install pip
+# Install yum dependencies
+RUN yum install -y \
+    wget 
+
+# Install EPEL, so that we can install golang
 RUN cd /tmp && \ 
     wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
     rpm -ivh epel-release-6-8.noarch.rpm
 
-# Install yum dependencies
+# Install more yum dependencies
 RUN yum install -y \
     git \
     golang \
