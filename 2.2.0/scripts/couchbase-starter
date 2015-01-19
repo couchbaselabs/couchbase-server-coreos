@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Download, build and install start script
-go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && cd $GOPATH/src/github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && go build && cp couchbase-start /usr/local/bin && couchbase-start
+go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && cd $GOPATH/src/github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && go build && cp couchbase-start /usr/local/bin && couchbase-start "$@"
