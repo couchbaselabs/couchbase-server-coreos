@@ -83,7 +83,9 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 		}
 	}
 
-	select {} // block forever
+	c.EventLoop()
+
+	return fmt.Errorf("Event loop died") // should never get here
 
 }
 
@@ -489,6 +491,54 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 	}
 
 	return nil
+
+}
+
+// An an vent loop that:
+//   - publishes the fact that we are alive into etcd.
+func (c CouchbaseCluster) EventLoop() {
+
+	var lastErr error
+
+	for {
+		// publish our ip into etcd with short ttl
+		ttlSeconds := uint64(10)
+		if err := c.PublishNodeStateEtcd(ttlSeconds); err != nil {
+			msg := fmt.Sprintf("Error publishing node state to etcd: %v. "+
+				"Ignoring error, but other nodes won't be able to join"+
+				"this node until this issue is resolved.",
+				err)
+			log.Printf(msg)
+			lastErr = err
+		} else {
+			// if we had an error earlier, but it's now resolved,
+			// lets log that fact
+			if lastErr != nil {
+				msg := fmt.Sprintf("Successfully node state to etcd: %v. "+
+					"The previous error seems to have fixed itself!",
+					err)
+				log.Printf(msg)
+				lastErr = nil
+			}
+		}
+
+		// sleep for a while
+		<-time.After(time.Second * time.Duration(ttlSeconds/2))
+
+	}
+
+}
+
+// Publish the fact that we are up into etcd.
+func (c CouchbaseCluster) PublishNodeStateEtcd(ttlSeconds uint64) error {
+
+	// the etcd key to use, ie: /couchbase-node-state/<our ip>
+	// TODO: maybe this should be ip:port
+	key := path.Join(KEY_NODE_STATE, c.localCouchbaseIp)
+
+	_, err := c.etcdClient.Create(key, "up", ttlSeconds)
+
+	return err
 
 }
 
