@@ -41,11 +41,8 @@ RUN cp -r /opt/couchbase/bin/* /usr/local/bin && \
     cp -r /opt/couchbase/bin/tools/* /usr/local/bin && \
     cp -r /opt/couchbase/bin/install/* /usr/local/bin
 
-# Download, build and install start script
-RUN go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \ 
-    cd $GOPATH/src/github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \
-    go build && \
-    cp couchbase-start /usr/local/bin
+# Put start script
+ADD scripts/couchbase-start/couchbase-starter /usr/local/bin/
 
 # See http://docs.couchbase.com/couchbase-manual-2.5/cb-install/#xdcr
 EXPOSE 8091 8092 11210 11211
