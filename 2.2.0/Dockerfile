@@ -5,13 +5,43 @@ MAINTAINER Traun Leyden <tleyden@couchbase.com>
 ENV CB_VERSION		2.2.0
 ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
 ENV CB_PACKAGE		couchbase-server-community_2.2.0_x86_64.rpm
+ENV GOPATH /opt/go
+
+# Create directory to hold go code
+RUN mkdir -p $GOPATH
+
+# Install EPEL, so that we can install pip
+RUN cd /tmp && \ 
+    wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm && \
+    rpm -ivh epel-release-6-8.noarch.rpm
+
+# Install yum dependencies
+RUN yum install -y \
+    git \
+    golang \
+    hg \
+    hostname \
+    initscripts \
+    openssl \
+    pkgconfig \
+    tar \
+    wget 
 
 # Install couchbase
-RUN yum install -y wget pkgconfig openssl tar hostname
 RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
 
-# Put start script
-ADD scripts/couchbase-start /usr/local/bin/
+# Copy couchbase binaries into a dir in the path
+# (you would think installing couchbase would do this for you)
+# I haven't figured out how to append to $PATH, hence I'm doing it this way
+RUN cp /opt/couchbase/bin/* /usr/local/bin && \
+    cp /opt/couchbase/bin/tools/* /usr/local/bin && \
+    cp /opt/couchbase/bin/install/* /usr/local/bin
+
+# Download, build and install start script
+RUN go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \ 
+    cd $GOPATH/src/github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \
+    go build && \
+    cp couchbase-start /usr/local/bin
 
 # See http://docs.couchbase.com/couchbase-manual-2.5/cb-install/#xdcr
 EXPOSE 8091 8092 11210 11211

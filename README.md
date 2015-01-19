@@ -17,3 +17,6 @@ $ cd scripts
 $ ./generate_scripts.sh && ./generate_dockerfiles.sh && ./generate_fleet.sh
 ``` 
 
+## Proposal for fixing node restart problem
+
+- When couchbase-start is called 
