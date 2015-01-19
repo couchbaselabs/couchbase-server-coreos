@@ -27,8 +27,7 @@ func main() {
 	destDir := os.Args[2]
 
 	templateFiles := []string{
-		"../templates/fleet/couchbase_bootstrap_node.service",
-		"../templates/fleet/couchbase_node.service.template",
+		"../templates/fleet/couchbase_node@.service.template",
 	}
 
 	for _, templateFile := range templateFiles {
