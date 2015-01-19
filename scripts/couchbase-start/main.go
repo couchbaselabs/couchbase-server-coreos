@@ -550,7 +550,7 @@ func (c CouchbaseCluster) PublishNodeStateEtcd(ttlSeconds uint64) error {
 func main() {
 
 	if len(os.Args) < 2 {
-		log.Fatal(fmt.Errorf("You must pass the ip of this node as an arg"))
+		log.Fatal(fmt.Errorf("You must pass the ip of this node as an arg."))
 	}
 
 	couchbaseCluster := &CouchbaseCluster{}
