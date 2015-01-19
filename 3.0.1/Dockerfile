@@ -37,7 +37,7 @@ RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
 # Copy couchbase binaries into a dir in the path
 # (you would think installing couchbase would do this for you)
 # I haven't figured out how to append to $PATH, hence I'm doing it this way
-RUN cp /opt/couchbase/bin/* /usr/local/bin && \
+RUN cp -r /opt/couchbase/bin/* /usr/local/bin && \
     cp /opt/couchbase/bin/tools/* /usr/local/bin && \
     cp /opt/couchbase/bin/install/* /usr/local/bin
 
