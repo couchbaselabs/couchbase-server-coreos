@@ -45,6 +45,7 @@ etcdctl set /services/couchbase/userpass "$userpass"
 # launch fleet!
 echo "Kicking off couchbase server nodes"
 cd couchbase-server-docker/$version/fleet
+fleetctl submit couchbase_node@.service
 fleetctl start couchbase_node@{1..$numnodes}.service
 
 
