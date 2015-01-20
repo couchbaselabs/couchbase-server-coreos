@@ -327,6 +327,15 @@ func (c CouchbaseCluster) CreateDefaultBucket() error {
 
 	log.Printf("CreateDefaultBucket()")
 
+	hasDefaultBucket, err := c.HasDefaultBucket()
+	if err != nil {
+		return err
+	}
+	if hasDefaultBucket {
+		log.Printf("Default bucket already exists, nothing to do")
+		return nil
+	}
+
 	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default/buckets", c.localCouchbaseIp, c.localCouchbasePort)
 
 	data := url.Values{
@@ -338,6 +347,41 @@ func (c CouchbaseCluster) CreateDefaultBucket() error {
 	}
 
 	return c.POST(false, endpointUrl, data)
+
+}
+
+func (c CouchbaseCluster) HasDefaultBucket() (bool, error) {
+
+	log.Printf("HasDefaultBucket()")
+
+	endpointUrl := fmt.Sprintf(
+		"http://%v:%v/pools/default/buckets",
+		c.localCouchbaseIp,
+		c.localCouchbasePort,
+	)
+
+	jsonList := []interface{}{}
+	if err := c.getJsonData(endpointUrl, &jsonList); err != nil {
+		return false, err
+	}
+
+	for _, bucketEntry := range jsonList {
+		bucketEntryMap, ok := bucketEntry.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		name := bucketEntryMap["name"]
+		name, ok = name.(string)
+		if !ok {
+			continue
+		}
+		if name == "default" {
+			return true, nil
+		}
+
+	}
+
+	return false, nil
 
 }
 
