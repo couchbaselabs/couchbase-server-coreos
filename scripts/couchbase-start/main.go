@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -540,6 +541,35 @@ func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]interface{}, err
 
 }
 
+// Since AddNode seems to fail sometimes (I saw a case where it returned a 400 error)
+// retry several times before finally giving up.
+func (c CouchbaseCluster) AddNodeRetry(liveNodeIp string) error {
+
+	numSecondsToSleep := 0
+
+	for i := 0; i < MAX_RETRIES_JOIN_CLUSTER; i++ {
+
+		numSecondsToSleep += 10
+
+		if err := c.AddNode(liveNodeIp); err != nil {
+			log.Printf("AddNode failed with err: %v.  Will retry in %v secs", err, numSecondsToSleep)
+
+		} else {
+			// it worked, we are done
+			return nil
+
+		}
+
+		time2wait := time.Second * time.Duration(numSecondsToSleep)
+
+		<-time.After(time2wait)
+
+	}
+
+	return fmt.Errorf("Unable to AddNode after several attempts")
+
+}
+
 func (c CouchbaseCluster) AddNode(liveNodeIp string) error {
 
 	log.Printf("AddNode()")
@@ -666,8 +696,21 @@ func (c CouchbaseCluster) POST(defaultAdminCreds bool, endpointUrl string, data 
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	body := ""
+	if err != nil {
+		body = fmt.Sprintf("Unable to read body: %v", err.Error())
+	} else {
+		body = string(bodyBytes)
+	}
+
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return fmt.Errorf("Failed to POST to %v.  Status code: %v", endpointUrl, resp.StatusCode)
+		return fmt.Errorf(
+			"Failed to POST to %v.  Status code: %v.  Body: %v",
+			endpointUrl,
+			resp.StatusCode,
+			body,
+		)
 	}
 
 	return nil
