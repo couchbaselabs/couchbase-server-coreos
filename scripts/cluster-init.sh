@@ -37,17 +37,17 @@ fi
 git clone https://github.com/couchbaselabs/couchbase-server-docker
 
 # TEMP: use experimental branch
-cd couchbase-server-docker && git checkout -t origin/feature/experimental && cd ~
+cd couchbase-server-docker && git checkout -t origin/feature/experimental && cd
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
 
 # launch fleet!
 
-cd couchbase-server-docker/$version/fleet
+cd couchbase-server-docker/$version/fleet/
 echo "Submit couchbase_node@.service"
 fleetctl submit couchbase_node@.service
-echo "Kicking off $numnodes couchbase server nodes"
+echo "Kicking off $numnodes couchbase server nodes: couchbase_node@{1..$numnodes}.service"
 fleetctl start "couchbase_node@{1..$numnodes}.service"
 
 
