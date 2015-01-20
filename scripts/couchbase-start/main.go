@@ -338,9 +338,12 @@ func (c CouchbaseCluster) AddNodeAndRebalanceWhenReady(liveNodeIp string) error 
 
 		switch isRebalancing {
 		case true:
-			log.Printf("Rebalance in progress, waiting ..")
 
-			<-time.After(time.Second * time.Duration(numSecondsToSleep))
+			time2wait := time.Second * time.Duration(numSecondsToSleep)
+
+			log.Printf("Rebalance in progress, waiting %v seconds", time2wait)
+
+			<-time.After(time2wait)
 
 			continue
 		case false:
