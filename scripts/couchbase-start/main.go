@@ -637,7 +637,12 @@ func (c CouchbaseCluster) CheckIfInCluster(liveNodeIp string) (bool, error) {
 	}
 	log.Printf("CheckIfInCluster nodes: %+v", nodes)
 
-	for _, nodeMap := range nodes {
+	for _, node := range nodes {
+
+		nodeMap, ok := node.(map[string]interface{})
+		if !ok {
+			return false, fmt.Errorf("Node had unexpected data type")
+		}
 
 		hostname := nodeMap["hostname"] // ex: "10.231.192.180:8091"
 		hostnameStr, ok := hostname.(string)
@@ -661,8 +666,9 @@ func (c CouchbaseCluster) TriggerRebalance(liveNodeIp string) error {
 	return nil
 }
 
-func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]map[string]interface{}, error) {
+func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]interface{}, error) {
 
+	log.Printf("GetClusterNodes()")
 	liveNodePort := c.localCouchbasePort // TODO: we should be getting this from etcd
 
 	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default", liveNodeIp, liveNodePort)
@@ -671,9 +677,13 @@ func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]map[string]inter
 	if err := c.getJsonData(endpointUrl, &jsonMap); err != nil {
 		return nil, err
 	}
+	log.Printf("GetClusterNodes jsonMap: %+v", jsonMap)
 
 	nodes := jsonMap["nodes"]
-	nodeMaps, ok := nodes.([]map[string]interface{})
+
+	log.Printf("GetClusterNodes nodes: %+v", nodes)
+
+	nodeMaps, ok := nodes.([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("Unexpected data type in nodes field")
 	}
