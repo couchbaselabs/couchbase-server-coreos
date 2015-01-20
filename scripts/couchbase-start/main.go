@@ -661,9 +661,62 @@ func (c CouchbaseCluster) CheckIfInCluster(liveNodeIp string) (bool, error) {
 	return false, nil
 }
 
+// Based on docs: http://docs.couchbase.com/couchbase-manual-2.5/cb-rest-api/#rebalancing-nodes
 func (c CouchbaseCluster) TriggerRebalance(liveNodeIp string) error {
-	log.Printf("TODO: TriggerRebalance()")
-	return nil
+
+	log.Printf("TriggerRebalance()")
+
+	otpNodeList, err := c.OtpNodeList(liveNodeIp)
+	if err != nil {
+		return nil
+	}
+
+	log.Printf("TriggerRebalance otpNodeList: %v", otpNodeList)
+
+	liveNodePort := c.localCouchbasePort // TODO: we should be getting this from etcd
+
+	endpointUrl := fmt.Sprintf("http://%v:%v/controller/rebalance", liveNodeIp, liveNodePort)
+
+	data := url.Values{
+		"ejectedNodes": {},
+		"knownNodes":   otpNodeList,
+	}
+
+	return c.POST(false, endpointUrl, data)
+}
+
+// The rebalance command needs the current list of nodes, and it wants
+// the "otpNode" values, ie: ["ns_1@10.231.192.180", ..]
+func (c CouchbaseCluster) OtpNodeList(liveNodeIp string) ([]string, error) {
+
+	otpNodeList := []string{}
+
+	nodes, err := c.GetClusterNodes(liveNodeIp)
+	if err != nil {
+		return otpNodeList, err
+	}
+
+	for _, node := range nodes {
+
+		nodeMap, ok := node.(map[string]interface{})
+		if !ok {
+			return otpNodeList, fmt.Errorf("Node had unexpected data type")
+		}
+
+		otpNode := nodeMap["otpNode"] // ex: "ns_1@10.231.192.180"
+		otpNodeStr, ok := otpNode.(string)
+		log.Printf("OtpNodeList, otpNode: %v", otpNodeStr)
+
+		if !ok {
+			return otpNodeList, fmt.Errorf("No otpNode string found")
+		}
+
+		otpNodeList = append(otpNodeList, otpNodeStr)
+
+	}
+
+	return otpNodeList, nil
+
 }
 
 func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]interface{}, error) {
