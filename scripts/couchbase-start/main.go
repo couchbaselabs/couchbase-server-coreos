@@ -544,7 +544,7 @@ func (c CouchbaseCluster) PublishNodeStateEtcd(ttlSeconds uint64) error {
 
 	log.Printf("Publish node-state to key: %v", key)
 
-	_, err := c.etcdClient.Create(key, "up", ttlSeconds)
+	_, err := c.etcdClient.Set(key, "up", ttlSeconds)
 
 	return err
 
