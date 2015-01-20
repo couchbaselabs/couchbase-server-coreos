@@ -43,10 +43,12 @@ cd couchbase-server-docker && git checkout -t origin/feature/experimental && cd 
 etcdctl set /services/couchbase/userpass "$userpass"
 
 # launch fleet!
-echo "Kicking off couchbase server nodes"
+
 cd couchbase-server-docker/$version/fleet
+echo "Submit couchbase_node@.service"
 fleetctl submit couchbase_node@.service
-fleetctl start couchbase_node@{1..$numnodes}.service
+echo "Kicking off $numnodes couchbase server nodes"
+fleetctl start "couchbase_node@{1..$numnodes}.service"
 
 
 
