@@ -133,7 +133,7 @@ func (c CouchbaseCluster) JoinExistingCluster() error {
 
 		liveNodeIp, err := c.FindLiveNode()
 		if err != nil {
-			return err
+			log.Printf("FindLiveNode returned err: %v.  Trying again", err)
 		}
 
 		log.Printf("liveNodeIp: %v", liveNodeIp)
