@@ -395,7 +395,7 @@ func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
 
 	log.Printf("JoinLiveNode() called with %v", liveNodeIp)
 
-	inCluster, err := c.CheckIfInCluster(liveNodeIp)
+	inCluster, err := c.CheckIfInClusterAndHealthy(liveNodeIp)
 	if err != nil {
 		return err
 	}
@@ -420,7 +420,7 @@ func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
 	return nil
 }
 
-func (c CouchbaseCluster) CheckIfInCluster(liveNodeIp string) (bool, error) {
+func (c CouchbaseCluster) CheckIfInClusterAndHealthy(liveNodeIp string) (bool, error) {
 
 	log.Printf("CheckIfInCluster()")
 	nodes, err := c.GetClusterNodes(liveNodeIp)
@@ -444,8 +444,19 @@ func (c CouchbaseCluster) CheckIfInCluster(liveNodeIp string) (bool, error) {
 			return false, fmt.Errorf("No hostname string found")
 		}
 		if strings.Contains(hostnameStr, c.localCouchbaseIp) {
-			log.Printf("CheckIfInCluster returning true")
-			return true, nil
+
+			status := nodeMap["status"]
+			statusStr, ok := status.(string)
+			if !ok {
+				return false, fmt.Errorf("No status string found")
+			}
+			if statusStr == "healthy" {
+				log.Printf("CheckIfInCluster returning true")
+				return true, nil
+			} else {
+				log.Printf("%v in cluster, but status not healthy.  Status: %v", c.localCouchbaseIp, statusStr)
+			}
+
 		}
 	}
 
