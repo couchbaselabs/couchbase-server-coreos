@@ -630,24 +630,29 @@ func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
 */
 func (c CouchbaseCluster) CheckIfInCluster(liveNodeIp string) (bool, error) {
 
+	log.Printf("CheckIfInCluster()")
 	nodes, err := c.GetClusterNodes(liveNodeIp)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
-	log.Printf("Nodes: %v", nodes)
+	log.Printf("CheckIfInCluster nodes: %+v", nodes)
 
 	for _, nodeMap := range nodes {
 
 		hostname := nodeMap["hostname"] // ex: "10.231.192.180:8091"
 		hostnameStr, ok := hostname.(string)
+		log.Printf("CheckIfInCluster, hostname: %v", hostnameStr)
+
 		if !ok {
 			return false, fmt.Errorf("No hostname string found")
 		}
 		if strings.Contains(hostnameStr, c.localCouchbaseIp) {
+			log.Printf("CheckIfInCluster returning true")
 			return true, nil
 		}
 	}
 
+	log.Printf("CheckIfInCluster returning false")
 	return false, nil
 }
 
