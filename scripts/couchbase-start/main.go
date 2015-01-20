@@ -597,7 +597,17 @@ func (c CouchbaseCluster) AddNode(liveNodeIp string) error {
 
 	log.Printf("AddNode posting to %v with data: %v", endpointUrl, data.Encode())
 
-	return c.POST(false, endpointUrl, data)
+	err := c.POST(false, endpointUrl, data)
+	if err != nil {
+		if strings.Contains(err.Error(), "Node is already part of cluster") {
+			// absorb the error in this case, since its harmless
+			log.Printf("Node was already part of cluster, so no need to add")
+		} else {
+			return err
+		}
+	}
+
+	return nil
 
 }
 
