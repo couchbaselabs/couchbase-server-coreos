@@ -33,37 +33,19 @@ if [[ -z "$version" || -z "$numnodes" || -z "$userpass" ]] ; then
     exit 1 
 fi
 
-# calculate how many "other" couchbase nodes aside from the
-# bootstrap node by subtracting 1 from the total # of nodes
-non_bootstrap_nodes=$(( ${numnodes} - 1 ))
-
-# validate that we have a valid value
-if [ "$non_bootrap_nodes" == "-1" ]; then
-    echo "You passed an invalid value for n: $numnodes"
-    exit 1 
-fi
-
 # clone repo with fleet unit files
 git clone https://github.com/couchbaselabs/couchbase-server-docker
+
+# TEMP: use experimental branch
+cd couchbase-server-docker && git checkout -t origin/feature/experimental
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
 
 # launch fleet!
-echo "Kicking off couchbase server bootstrap node"
+echo "Kicking off couchbase server nodes"
 cd couchbase-server-docker/$version/fleet
-fleetctl start couchbase_bootstrap_node.service couchbase_bootstrap_node_announce.service 
-
-if (( $non_bootstrap_nodes > 0 )); then 
-
-    # generate unit files for non-bootstrap couchbase server nodes
-    ./create_node_services.sh $non_bootstrap_nodes
-
-    echo "Kicking off $non_bootrap_nodes additional couchbase server nodes"
-    fleetctl start couchbase_node.*.service
-else 
-    echo "No additional couchbase server nodes needed, running single node system"
-fi
+fleetctl start couchbase_node@{1..$numnodes}.service
 
 
 
