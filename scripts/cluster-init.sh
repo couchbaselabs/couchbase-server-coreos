@@ -52,11 +52,10 @@ cd couchbase-server-docker/$version/fleet/
 echo "Submit couchbase_node@.service"
 fleetctl submit couchbase_node@.service
 echo "Kicking off $numnodes couchbase server nodes"
-for i in $numnodes; do 
+for i in {1..$numnodes}; do 
     echo "Kicking off node $i"
     fleetctl start "couchbase_node@$i.service" 
 done
-
 
 
 
