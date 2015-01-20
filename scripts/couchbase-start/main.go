@@ -59,6 +59,10 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 		return err
 	}
 
+	if err := PrepareVarDirectory(); err != nil {
+		return err
+	}
+
 	if err := StartCouchbaseService(); err != nil {
 		return err
 	}
@@ -208,6 +212,47 @@ func (c CouchbaseCluster) WaitForRestService() error {
 	}
 
 	return fmt.Errorf("Unable to connect to REST api after several attempts")
+
+}
+
+// Couchbase expects a few subdirectories under /opt/couchbase/var, or else
+// it will refuse to start and fail with an error.  This is only needed
+// when /opt/couchbase/var is mounted as a volume, which presumably starts out empty.
+func PrepareVarDirectory() error {
+
+	log.Printf("PrepareVarDirectory()")
+
+	cmd := exec.Command(
+		"mkdir",
+		"-p",
+		"lib/couchbase",
+		"lib/couchbase/config",
+		"lib/couchbase/data",
+		"lib/couchbase/stats",
+		"lib/couchbase/logs",
+		"lib/moxi",
+	)
+	cmd.Dir = "/opt/couchbase/var"
+
+	output, err := cmd.CombinedOutput()
+	log.Printf("mkdir output: %v", output)
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command(
+		"chown",
+		"-R",
+		"couchbase:couchbase",
+		"/opt/couchbase/var",
+	)
+	output, err = cmd.CombinedOutput()
+	log.Printf("chown output: %v", output)
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
 
