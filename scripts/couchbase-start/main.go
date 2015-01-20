@@ -401,7 +401,7 @@ func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
 	}
 
 	if !inCluster {
-		if err := c.AddNode(liveNodeIp); err != nil {
+		if err := c.AddNodeRetry(liveNodeIp); err != nil {
 			return err
 		}
 	}
@@ -538,6 +538,35 @@ func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]interface{}, err
 	}
 
 	return nodeMaps, nil
+
+}
+
+// Since AddNode seems to fail sometimes (I saw a case where it returned a 400 error)
+// retry several times before finally giving up.
+func (c CouchbaseCluster) AddNodeRetry(liveNodeIp string) error {
+
+	numSecondsToSleep := 0
+
+	for i := 0; i < MAX_RETRIES_JOIN_CLUSTER; i++ {
+
+		numSecondsToSleep += 10
+
+		if err := c.AddNode(liveNodeIp); err != nil {
+			log.Printf("AddNode failed with err: %v.  Will retry in %v secs", err, numSecondsToSleep)
+
+		} else {
+			// it worked, we are done
+			return nil
+
+		}
+
+		time2wait := time.Second * time.Duration(numSecondsToSleep)
+
+		<-time.After(time2wait)
+
+	}
+
+	return fmt.Errorf("Unable to AddNode after several attempts")
 
 }
 
