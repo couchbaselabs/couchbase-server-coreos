@@ -468,9 +468,11 @@ func (c CouchbaseCluster) TriggerRebalance(liveNodeIp string) error {
 
 	endpointUrl := fmt.Sprintf("http://%v:%v/controller/rebalance", liveNodeIp, liveNodePort)
 
+	otpNodes := strings.Join(otpNodeList, ",")
+
 	data := url.Values{
 		"ejectedNodes": {},
-		"knownNodes":   otpNodeList,
+		"knownNodes":   {otpNodes},
 	}
 
 	log.Printf("TriggerRebalance encoded form value: %v", data.Encode())
