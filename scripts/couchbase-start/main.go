@@ -91,6 +91,8 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 
 func (c CouchbaseCluster) BecomeFirstClusterNode() (bool, error) {
 
+	// since we don't knoow how long it will be until we go
+	// into the event loop, set TTL to 0 (infinite) for now.
 	_, err := c.etcdClient.CreateDir(KEY_NODE_STATE, TTL_NONE)
 
 	if err != nil {
@@ -506,8 +508,20 @@ func (c CouchbaseCluster) EventLoop() {
 	var lastErr error
 
 	for {
-		// publish our ip into etcd with short ttl
+
+		// update the node-state directory ttl.  we want this directory
+		// to disappear in case all nodes in the cluster are down, since
+		// otherwise it would just be unwanted residue.
 		ttlSeconds := uint64(10)
+		_, err := c.etcdClient.UpdateDir(KEY_NODE_STATE, ttlSeconds)
+		if err != nil {
+			msg := fmt.Sprintf("Error updating %v dir in etc with new TTL. "+
+				"Ignoring error, but this could cause problems",
+				KEY_NODE_STATE)
+			log.Printf(msg)
+		}
+
+		// publish our ip into etcd with short ttl
 		if err := c.PublishNodeStateEtcd(ttlSeconds); err != nil {
 			msg := fmt.Sprintf("Error publishing node state to etcd: %v. "+
 				"Ignoring error, but other nodes won't be able to join"+
