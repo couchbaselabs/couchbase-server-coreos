@@ -409,6 +409,9 @@ func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
 		return err
 	}
 
+	// TODO: better coordinate the rebalance, so if N nodes come up at
+	// roughly the same time, rebalance only happens _once_
+
 	if err := c.TriggerRebalance(liveNodeIp); err != nil {
 		return err
 	}
@@ -416,218 +419,6 @@ func (c CouchbaseCluster) JoinLiveNode(liveNodeIp string) error {
 	return nil
 }
 
-/*
-{
-    "storageTotals":{
-        "ram":{
-            "total":11855024128,
-            "quotaTotal":7112491008,
-            "quotaUsed":268435456,
-            "used":8470298624,
-            "usedByData":83898760
-        },
-        "hdd":{
-            "total":56962781184,
-            "quotaTotal":56962781184,
-            "used":7784913426,
-            "usedByData":68614614,
-            "free":48987991821
-        }
-    },
-    "name":"default",
-    "alerts":[
-
-    ],
-    "alertsSilenceURL":"/controller/resetAlerts?token=0&uuid=6cd05d617fbfd831f914d972f725c54b",
-    "nodes":[
-        {
-            "systemStats":{
-                "cpu_utilization_rate":8.910891089108912,
-                "swap_total":0,
-                "swap_used":0,
-                "mem_total":3951648768,
-                "mem_free":2904670208
-            },
-            "interestingStats":{
-                "cmd_get":0.0,
-                "couch_docs_actual_disk_size":17814782,
-                "couch_docs_data_size":17801064,
-                "couch_views_actual_disk_size":0,
-                "couch_views_data_size":0,
-                "curr_items":0,
-                "curr_items_tot":0,
-                "ep_bg_fetched":0.0,
-                "get_hits":0.0,
-                "mem_used":19499352,
-                "ops":0.0,
-                "vb_replica_curr_items":0
-            },
-            "uptime":"173",
-            "memoryTotal":3951648768,
-            "memoryFree":2904670208,
-            "mcdMemoryReserved":3014,
-            "mcdMemoryAllocated":3014,
-            "couchApiBase":"http://10.169.231.39:8092/",
-            "clusterMembership":"active",
-            "status":"warmup",
-            "otpNode":"ns_1@10.169.231.39",
-            "thisNode":true,
-            "hostname":"10.169.231.39:8091",
-            "clusterCompatibility":131072,
-            "version":"2.2.0-837-rel-community",
-            "os":"x86_64-unknown-linux-gnu",
-            "ports":{
-                "proxy":11211,
-                "direct":11210
-            }
-        },
-        {
-            "systemStats":{
-                "cpu_utilization_rate":33.64485981308411,
-                "swap_total":0,
-                "swap_used":0,
-                "mem_total":3951726592,
-                "mem_free":3186880512
-            },
-            "interestingStats":{
-                "cmd_get":0.0,
-                "couch_docs_actual_disk_size":26823580,
-                "couch_docs_data_size":26744832,
-                "couch_views_actual_disk_size":0,
-                "couch_views_data_size":0,
-                "curr_items":0,
-                "curr_items_tot":0,
-                "ep_bg_fetched":0.0,
-                "get_hits":0.0,
-                "mem_used":32125016,
-                "ops":0.0,
-                "vb_replica_curr_items":0
-            },
-            "uptime":"27",
-            "memoryTotal":3951726592,
-            "memoryFree":3186880512,
-            "mcdMemoryReserved":3014,
-            "mcdMemoryAllocated":3014,
-            "couchApiBase":"http://10.33.184.190:8092/",
-            "clusterMembership":"active",
-            "status":"unhealthy",
-            "otpNode":"ns_1@10.33.184.190",
-            "hostname":"10.33.184.190:8091",
-            "clusterCompatibility":131072,
-            "version":"2.2.0-837-rel-community",
-            "os":"x86_64-unknown-linux-gnu",
-            "ports":{
-                "proxy":11211,
-                "direct":11210
-            }
-        },
-        {
-            "systemStats":{
-                "cpu_utilization_rate":8.910891089108912,
-                "swap_total":0,
-                "swap_used":0,
-                "mem_total":3951648768,
-                "mem_free":2915377152
-            },
-            "interestingStats":{
-                "cmd_get":0.0,
-                "couch_docs_actual_disk_size":23976252,
-                "couch_docs_data_size":23848960,
-                "couch_views_actual_disk_size":0,
-                "couch_views_data_size":0,
-                "curr_items":0,
-                "curr_items_tot":0,
-                "ep_bg_fetched":0.0,
-                "get_hits":0.0,
-                "mem_used":32274392,
-                "ops":0.0,
-                "vb_replica_curr_items":0
-            },
-            "uptime":"18",
-            "memoryTotal":3951648768,
-            "memoryFree":2915377152,
-            "mcdMemoryReserved":3014,
-            "mcdMemoryAllocated":3014,
-            "couchApiBase":"http://10.231.192.180:8092/",
-            "clusterMembership":"active",
-            "status":"unhealthy",
-            "otpNode":"ns_1@10.231.192.180",
-            "hostname":"10.231.192.180:8091",
-            "clusterCompatibility":131072,
-            "version":"2.2.0-837-rel-community",
-            "os":"x86_64-unknown-linux-gnu",
-            "ports":{
-                "proxy":11211,
-                "direct":11210
-            }
-        }
-    ],
-    "buckets":{
-        "uri":"/pools/default/buckets?v=42121168&uuid=6cd05d617fbfd831f914d972f725c54b"
-    },
-    "remoteClusters":{
-        "uri":"/pools/default/remoteClusters?uuid=6cd05d617fbfd831f914d972f725c54b",
-        "validateURI":"/pools/default/remoteClusters?just_validate=1"
-    },
-    "controllers":{
-        "addNode":{
-            "uri":"/controller/addNode?uuid=6cd05d617fbfd831f914d972f725c54b"
-        },
-        "rebalance":{
-            "uri":"/controller/rebalance?uuid=6cd05d617fbfd831f914d972f725c54b"
-        },
-        "failOver":{
-            "uri":"/controller/failOver?uuid=6cd05d617fbfd831f914d972f725c54b"
-        },
-        "reAddNode":{
-            "uri":"/controller/reAddNode?uuid=6cd05d617fbfd831f914d972f725c54b"
-        },
-        "ejectNode":{
-            "uri":"/controller/ejectNode?uuid=6cd05d617fbfd831f914d972f725c54b"
-        },
-        "setAutoCompaction":{
-            "uri":"/controller/setAutoCompaction?uuid=6cd05d617fbfd831f914d972f725c54b",
-            "validateURI":"/controller/setAutoCompaction?just_validate=1"
-        },
-        "replication":{
-            "createURI":"/controller/createReplication?uuid=6cd05d617fbfd831f914d972f725c54b",
-            "validateURI":"/controller/createReplication?just_validate=1"
-        },
-        "setFastWarmup":{
-            "uri":"/controller/setFastWarmup?uuid=6cd05d617fbfd831f914d972f725c54b",
-            "validateURI":"/controller/setFastWarmup?just_validate=1"
-        }
-    },
-    "rebalanceStatus":"none",
-    "rebalanceProgressUri":"/pools/default/rebalanceProgress",
-    "stopRebalanceUri":"/controller/stopRebalance?uuid=6cd05d617fbfd831f914d972f725c54b",
-    "nodeStatusesUri":"/nodeStatuses",
-    "maxBucketCount":10,
-    "autoCompactionSettings":{
-        "parallelDBAndViewCompaction":false,
-        "databaseFragmentationThreshold":{
-            "percentage":30,
-            "size":"undefined"
-        },
-        "viewFragmentationThreshold":{
-            "percentage":30,
-            "size":"undefined"
-        }
-    },
-    "fastWarmupSettings":{
-        "fastWarmupEnabled":true,
-        "minMemoryThreshold":10,
-        "minItemsThreshold":10
-    },
-    "tasks":{
-        "uri":"/pools/default/tasks?v=133172395"
-    },
-    "counters":{
-        "rebalance_start":2,
-        "rebalance_success":1
-    }
-}
-*/
 func (c CouchbaseCluster) CheckIfInCluster(liveNodeIp string) (bool, error) {
 
 	log.Printf("CheckIfInCluster()")
@@ -681,6 +472,8 @@ func (c CouchbaseCluster) TriggerRebalance(liveNodeIp string) error {
 		"ejectedNodes": {},
 		"knownNodes":   otpNodeList,
 	}
+
+	log.Printf("TriggerRebalance encoded form value: %v", data.Encode())
 
 	return c.POST(false, endpointUrl, data)
 }
