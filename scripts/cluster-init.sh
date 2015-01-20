@@ -33,6 +33,10 @@ if [[ -z "$version" || -z "$numnodes" || -z "$userpass" ]] ; then
     exit 1 
 fi
 
+# clear any state in etc
+etcdctl rm --recursive /couchbase-node-state
+etcdctl rm --recursive /services/couchbase
+
 # clone repo with fleet unit files
 git clone https://github.com/couchbaselabs/couchbase-server-docker
 
@@ -49,6 +53,7 @@ echo "Submit couchbase_node@.service"
 fleetctl submit couchbase_node@.service
 echo "Kicking off $numnodes couchbase server nodes"
 for i in $numnodes; do 
+    echo "Kicking off node $i"
     fleetctl start "couchbase_node@$i.service" 
 done
 
