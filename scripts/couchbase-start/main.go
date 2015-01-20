@@ -95,6 +95,8 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 
 func (c CouchbaseCluster) BecomeFirstClusterNode() (bool, error) {
 
+	log.Printf("BecomeFirstClusterNode()")
+
 	// since we don't knoow how long it will be until we go
 	// into the event loop, set TTL to 0 (infinite) for now.
 	_, err := c.etcdClient.CreateDir(KEY_NODE_STATE, TTL_NONE)
@@ -102,14 +104,17 @@ func (c CouchbaseCluster) BecomeFirstClusterNode() (bool, error) {
 	if err != nil {
 		// expected error where someone beat us out
 		if strings.Contains(err.Error(), "Key already exists") {
+			log.Printf("Key %v already exists", KEY_NODE_STATE)
 			return false, nil
 		}
 
 		// otherwise, unexpected error
+		log.Printf("Unexpected error: %v", err)
 		return false, err
 	}
 
 	// no error must mean that were were able to create the key
+	log.Printf("Created key: %v", KEY_NODE_STATE)
 	return true, nil
 
 }
