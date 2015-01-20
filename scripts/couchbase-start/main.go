@@ -541,43 +541,16 @@ func (c CouchbaseCluster) GetClusterNodes(liveNodeIp string) ([]interface{}, err
 
 }
 
-// Since AddNode seems to fail sometimes (I saw a case where it returned a 400 error)
-// retry several times before finally giving up.
-func (c CouchbaseCluster) AddNodeRetry(liveNodeIp string) error {
-
-	numSecondsToSleep := 0
-
-	for i := 0; i < MAX_RETRIES_JOIN_CLUSTER; i++ {
-
-		numSecondsToSleep += 10
-
-		if err := c.AddNode(liveNodeIp); err != nil {
-			log.Printf("AddNode failed with err: %v.  Will retry in %v secs", err, numSecondsToSleep)
-
-		} else {
-			// it worked, we are done
-			return nil
-
-		}
-
-		time2wait := time.Second * time.Duration(numSecondsToSleep)
-
-		<-time.After(time2wait)
-
-	}
-
-	return fmt.Errorf("Unable to AddNode after several attempts")
-
-}
-
 func (c CouchbaseCluster) AddNode(liveNodeIp string) error {
 
 	log.Printf("AddNode()")
 
-	endpointUrl := fmt.Sprintf("http://%v:%v/controller/addNode", c.localCouchbaseIp, c.localCouchbasePort)
+	liveNodePort := c.localCouchbasePort // TODO: we should be getting this from etcd
+
+	endpointUrl := fmt.Sprintf("http://%v:%v/controller/addNode", liveNodeIp, liveNodePort)
 
 	data := url.Values{
-		"hostname": {liveNodeIp},
+		"hostname": {c.localCouchbaseIp},
 		"user":     {c.adminUsername},
 		"password": {c.adminPassword},
 	}
