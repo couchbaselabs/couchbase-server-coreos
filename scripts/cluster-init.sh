@@ -37,7 +37,7 @@ fi
 git clone https://github.com/couchbaselabs/couchbase-server-docker
 
 # TEMP: use experimental branch
-cd couchbase-server-docker && git checkout -t origin/feature/experimental
+cd couchbase-server-docker && git checkout -t origin/feature/experimental && cd ~
 
 # add the username and password to etcd
 etcdctl set /services/couchbase/userpass "$userpass"
