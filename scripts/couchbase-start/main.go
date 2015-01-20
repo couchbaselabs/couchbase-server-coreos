@@ -555,6 +555,8 @@ func (c CouchbaseCluster) AddNode(liveNodeIp string) error {
 		"password": {c.adminPassword},
 	}
 
+	log.Printf("AddNode posting to %v with data: %v", endpointUrl, data.Encode())
+
 	return c.POST(false, endpointUrl, data)
 
 }
