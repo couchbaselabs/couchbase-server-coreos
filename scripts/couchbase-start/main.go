@@ -16,9 +16,21 @@ import (
 	"github.com/coreos/go-etcd/etcd"
 )
 
+/**
+
+TODO:
+
+- Take user/password as parameter to this script
+- Rename the etcd keys to be under couchbase.com
+- Use /opt/couchbase/var dir instead of /var/lib
+- Make it work with couchbase 3
+  - Figure out cluster ram size and tell couchbase somehow (need to check rest api)
+
+*/
+
 const (
 	LOCAL_ETCD_URL              = "http://127.0.0.1:4001"
-	KEY_NODE_STATE              = "couchbase-node-state"
+	KEY_NODE_STATE              = "/couchbase.com/couchbase-node-state"
 	TTL_NONE                    = 0
 	MAX_RETRIES_JOIN_CLUSTER    = 10
 	MAX_RETRIES_START_COUCHBASE = 3
@@ -32,7 +44,7 @@ const (
 	LOCAL_COUCHBASE_PORT          = "8091"
 	ADMIN_USERNAME                = "admin"
 	ADMIN_PASSWORD                = "password"
-	DEFAULT_BUCKET_RAM_MB         = "256"
+	DEFAULT_BUCKET_RAM_MB         = "128"
 	DEFAULT_BUCKET_REPLICA_NUMBER = "2"
 )
 

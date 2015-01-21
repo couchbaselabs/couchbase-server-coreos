@@ -34,8 +34,7 @@ if [[ -z "$version" || -z "$numnodes" || -z "$userpass" ]] ; then
 fi
 
 # clear any state in etc
-etcdctl rm --recursive /couchbase-node-state
-etcdctl rm --recursive /services/couchbase
+etcdctl rm --recursive /couchbase.com
 
 # clone repo with fleet unit files
 git clone https://github.com/couchbaselabs/couchbase-server-docker
@@ -44,7 +43,7 @@ git clone https://github.com/couchbaselabs/couchbase-server-docker
 cd couchbase-server-docker; git checkout -t origin/feature/experimental; cd
 
 # add the username and password to etcd
-etcdctl set /services/couchbase/userpass "$userpass"
+etcdctl set /couchbase.com/userpass "$userpass"
 
 
 # launch fleet!
