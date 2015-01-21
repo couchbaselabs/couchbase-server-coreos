@@ -234,7 +234,10 @@ func (c *CouchbaseCluster) FetchClusterDetails() error {
 			return fmt.Errorf("Expected implementationVersion to contain a string")
 		}
 
+		log.Printf("Version: %v", versionStr)
 		c.localCouchbaseVersion = versionStr
+
+		return nil
 
 	}
 
