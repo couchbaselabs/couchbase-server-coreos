@@ -10,8 +10,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/coreos/go-etcd/etcd"
 )
@@ -21,8 +23,6 @@ import (
 TODO:
 
 - Take user/password as parameter to this script
-- Rename the etcd keys to be under couchbase.com
-- Use /opt/couchbase/var dir instead of /var/lib
 - Make it work with couchbase 3
   - Figure out cluster ram size and tell couchbase somehow (need to check rest api)
 
@@ -52,6 +52,7 @@ type CouchbaseCluster struct {
 	etcdClient                 *etcd.Client
 	localCouchbaseIp           string
 	localCouchbasePort         string
+	localCouchbaseVersion      string
 	adminUsername              string
 	adminPassword              string
 	defaultBucketRamQuotaMB    string
@@ -80,7 +81,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 		return err
 	}
 
-	if err := c.WaitForRestService(); err != nil {
+	if err := c.FetchClusterDetails(); err != nil {
 		return err
 	}
 
@@ -88,6 +89,7 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 	case true:
 		log.Printf("We became first cluster node, init cluster and bucket")
 
+		// TODO: for cbs 3.0, we need to calc and set the memory size of the cluster
 		if err := c.ClusterInit(); err != nil {
 			return err
 		}
@@ -206,6 +208,37 @@ func (c CouchbaseCluster) FindLiveNode() (string, error) {
 	}
 
 	return "", nil
+
+}
+
+func (c *CouchbaseCluster) FetchClusterDetails() error {
+
+	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
+
+		endpointUrl := fmt.Sprintf(
+			"http://%v:%v/pools",
+			c.localCouchbaseIp,
+			c.localCouchbasePort,
+		)
+
+		jsonMap := map[string]interface{}{}
+		if err := c.getJsonData(endpointUrl, &jsonMap); err != nil {
+			log.Printf("Got error %v trying to fetch details.  Assume that the cluster is not up yet, sleeping and will retry", err)
+			<-time.After(time.Second * 10)
+			continue
+		}
+
+		implementationVersion := jsonMap["implementationVersion"]
+		versionStr, ok := implementationVersion.(string)
+		if !ok {
+			return fmt.Errorf("Expected implementationVersion to contain a string")
+		}
+
+		c.localCouchbaseVersion = versionStr
+
+	}
+
+	return fmt.Errorf("Unable to fetch cluster details after several attempts")
 
 }
 
@@ -337,7 +370,92 @@ func (c CouchbaseCluster) ClusterInit() error {
 		"port":     {c.localCouchbasePort},
 	}
 
+	if err := c.POST(true, endpointUrl, data); err != nil {
+		return err
+	}
+
+	majorVersion, err := c.CouchbaseMajorVersion()
+	if err != nil {
+		return err
+	}
+	if majorVersion > 2 {
+		return c.SetClusterRam()
+	}
+
+	return nil
+
+}
+
+func (c CouchbaseCluster) CouchbaseMajorVersion() (int, error) {
+
+	if len(c.localCouchbaseVersion) == 0 {
+		return -1, fmt.Errorf("c.localcouchbaseversion is empty ")
+	}
+
+	firstCharVerion, _ := utf8.DecodeRuneInString(c.localCouchbaseVersion)
+	majorVersion, err := strconv.Atoi(fmt.Sprintf("%v", firstCharVerion))
+	if err != nil {
+		return -1, err
+	}
+
+	return majorVersion, nil
+
+}
+
+// in Couchbase 3, we need to also set the cluster ram setting
+// See http://docs.couchbase.com/admin/admin/REST/rest-node-provisioning.html
+func (c CouchbaseCluster) SetClusterRam() error {
+
+	ramMb, err := CalculateClusterRam()
+	if err != nil {
+		log.Printf("Warning, failed to calculate cluster ram: %v.  Default to 1024 MB", err)
+		ramMb = "1024"
+	}
+
+	endpointUrl := fmt.Sprintf("http://%v:%v/pools/default", c.localCouchbaseIp, c.localCouchbasePort)
+
+	data := url.Values{
+		"memoryQuota": {ramMb},
+	}
+
 	return c.POST(true, endpointUrl, data)
+
+}
+
+func CalculateClusterRam() (string, error) {
+
+	totalRamMb, err := CalculateTotalRam()
+	if err != nil {
+		return "", err
+	}
+	clusterRam := (totalRamMb * 75) / 100
+	return fmt.Sprintf("%v", clusterRam), nil
+
+}
+
+func CalculateTotalRam() (int, error) {
+
+	cmd := exec.Command(
+		"free",
+		"-m",
+		"|",
+		"awk",
+		"'/^Mem:/{print $2}'",
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return -1, err
+	}
+
+	outputTrimmed := strings.TrimSpace(string(output))
+
+	i, err := strconv.Atoi(outputTrimmed)
+	if err != nil {
+		return -1, err
+	}
+
+	return i, nil
 
 }
 
