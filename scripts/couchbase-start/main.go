@@ -378,18 +378,11 @@ func (c CouchbaseCluster) ClusterInit() error {
 		return err
 	}
 
-	majorVersion, err := c.CouchbaseMajorVersion()
-	if err != nil {
-		return err
-	}
-	if majorVersion > 2 {
-		return c.SetClusterRam()
-	}
-
-	return nil
+	return c.SetClusterRam()
 
 }
 
+// What's the major version of Couchbase?  ie, 2 or 3 corresponding to v2.x and v3.x
 func (c CouchbaseCluster) CouchbaseMajorVersion() (int, error) {
 
 	if len(c.localCouchbaseVersion) == 0 {
