@@ -19,14 +19,6 @@ import (
 	"github.com/coreos/go-etcd/etcd"
 )
 
-/**
-
-TODO:
-
-- Take user/password as parameter to this script
-
-*/
-
 const (
 	LOCAL_ETCD_URL              = "http://127.0.0.1:4001"
 	KEY_NODE_STATE              = "/couchbase.com/couchbase-node-state"
@@ -39,7 +31,6 @@ const (
 	COUCHBASE_DEFAULT_ADMIN_USERNAME = "admin"
 	COUCHBASE_DEFAULT_ADMIN_PASSWORD = "password"
 
-	// TODO: these all need to be passed in as CLI params
 	LOCAL_COUCHBASE_PORT          = "8091"
 	DEFAULT_BUCKET_RAM_MB         = "128"
 	DEFAULT_BUCKET_REPLICA_NUMBER = "1"
