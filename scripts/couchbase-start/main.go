@@ -63,6 +63,8 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 	c.defaultBucketReplicaNumber = DEFAULT_BUCKET_REPLICA_NUMBER
 
 	c.etcdClient = etcd.NewClient([]string{LOCAL_ETCD_URL})
+	c.etcdClient.SetConsistency(etcd.STRONG_CONSISTENCY)
+
 	success, err := c.BecomeFirstClusterNode()
 	if err != nil {
 		return err
