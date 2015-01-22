@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -444,9 +445,6 @@ func CalculateTotalRam() (int, error) {
 	cmd := exec.Command(
 		"free",
 		"-m",
-		"|",
-		"awk",
-		"'/^Mem:/{print $2}'",
 	)
 
 	output, err := cmd.Output()
@@ -454,7 +452,23 @@ func CalculateTotalRam() (int, error) {
 		return -1, err
 	}
 
-	outputTrimmed := strings.TrimSpace(string(output))
+	// The returned output will look something like this:
+	//              total       used       free     shared    buffers     cached
+	// Mem:          3768       2601       1166          0          4       1877
+	// -/+ buffers/cache:        720       3048
+	// Swap:            0          0          0
+
+	re := regexp.MustCompile(`Mem:[ ]*[0-9]*`)
+	memPair := re.FindString(string(output)) // ie, "Mem: 3768"
+	if memPair == "" {
+		return -1, fmt.Errorf("Could not extract Mem total from %v", output)
+	}
+	if !strings.Contains(memPair, ":") {
+		return -1, fmt.Errorf("Could not extract Mem total from %v, no :", output)
+	}
+	memPairs := strings.Split(memPair, ":")
+
+	outputTrimmed := strings.TrimSpace(memPairs[1])
 
 	i, err := strconv.Atoi(outputTrimmed)
 	if err != nil {
