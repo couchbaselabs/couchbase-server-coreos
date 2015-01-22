@@ -421,6 +421,8 @@ func (c CouchbaseCluster) SetClusterRam() error {
 		"memoryQuota": {ramMb},
 	}
 
+	log.Printf("Attempting to set cluster ram to: %v MB", ramMb)
+
 	return c.POST(true, endpointUrl, data)
 
 }
@@ -431,6 +433,7 @@ func CalculateClusterRam() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	log.Printf("Total RAM (MB) on machine: %v", totalRamMb)
 	clusterRam := (totalRamMb * 75) / 100
 	return fmt.Sprintf("%v", clusterRam), nil
 
