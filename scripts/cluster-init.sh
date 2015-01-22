@@ -2,7 +2,7 @@
 
 # Usage:
 #
-# ./cluster-init.sh -n 3 -u "user:passw0rd"
+# ./cluster-init.sh -v 3.0.1 -n 3 -u \"user:passw0rd\""
 #
 # Where:
 #   -v Couchbase Server version (3.0.1 or 2.2)

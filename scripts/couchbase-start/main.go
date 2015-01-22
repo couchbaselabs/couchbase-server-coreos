@@ -200,7 +200,7 @@ func (c CouchbaseCluster) FindLiveNode() (string, error) {
 
 func (c *CouchbaseCluster) FetchClusterDetails() error {
 
-	for i := 0; i < MAX_RETRIES_START_COUCHBASE; i++ {
+	for i := 0; i < MAX_RETRIES_JOIN_CLUSTER; i++ {
 
 		endpointUrl := fmt.Sprintf(
 			"http://%v:%v/pools",
