@@ -84,7 +84,6 @@ func (c *CouchbaseCluster) StartCouchbaseNode() error {
 	case true:
 		log.Printf("We became first cluster node, init cluster and bucket")
 
-		// TODO: for cbs 3.0, we need to calc and set the memory size of the cluster
 		if err := c.ClusterInit(); err != nil {
 			return err
 		}
@@ -411,7 +410,7 @@ func (c CouchbaseCluster) SetClusterRam() error {
 
 	log.Printf("Attempting to set cluster ram to: %v MB", ramMb)
 
-	return c.POST(true, endpointUrl, data)
+	return c.POST(false, endpointUrl, data)
 
 }
 
