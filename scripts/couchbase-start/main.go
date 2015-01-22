@@ -24,8 +24,6 @@ import (
 TODO:
 
 - Take user/password as parameter to this script
-- Make it work with couchbase 3
-  - Figure out cluster ram size and tell couchbase somehow (need to check rest api)
 
 */
 
@@ -43,10 +41,8 @@ const (
 
 	// TODO: these all need to be passed in as CLI params
 	LOCAL_COUCHBASE_PORT          = "8091"
-	ADMIN_USERNAME                = "admin"
-	ADMIN_PASSWORD                = "password"
 	DEFAULT_BUCKET_RAM_MB         = "128"
-	DEFAULT_BUCKET_REPLICA_NUMBER = "2"
+	DEFAULT_BUCKET_REPLICA_NUMBER = "1"
 )
 
 type CouchbaseCluster struct {
@@ -63,8 +59,6 @@ type CouchbaseCluster struct {
 func (c *CouchbaseCluster) StartCouchbaseNode() error {
 
 	c.localCouchbasePort = LOCAL_COUCHBASE_PORT
-	c.adminUsername = ADMIN_USERNAME
-	c.adminPassword = ADMIN_PASSWORD
 	c.defaultBucketRamQuotaMB = DEFAULT_BUCKET_RAM_MB
 	c.defaultBucketReplicaNumber = DEFAULT_BUCKET_REPLICA_NUMBER
 
@@ -952,12 +946,22 @@ func (c CouchbaseCluster) PublishNodeStateEtcd(ttlSeconds uint64) error {
 
 func main() {
 
-	if len(os.Args) < 2 {
-		log.Fatal(fmt.Errorf("You must pass the ip of this node as an arg."))
+	usage := fmt.Sprintf("%v <ip> <user:pass>", os.Args[0])
+
+	if len(os.Args) != 3 {
+		log.Fatal(usage)
 	}
 
 	couchbaseCluster := &CouchbaseCluster{}
 	couchbaseCluster.localCouchbaseIp = os.Args[1]
+
+	userPass := os.Args[2]
+	if !strings.Contains(userPass, ":") {
+		log.Fatal(fmt.Errorf("user:pass must have a colon"))
+	}
+	userPassComponents := strings.Split(userPass, ":")
+	couchbaseCluster.adminUsername = userPassComponents[0]
+	couchbaseCluster.adminPassword = userPassComponents[1]
 
 	if err := couchbaseCluster.StartCouchbaseNode(); err != nil {
 		log.Fatal(err)

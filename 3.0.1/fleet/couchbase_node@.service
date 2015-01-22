@@ -7,7 +7,7 @@ EnvironmentFile=/etc/environment
 ExecStartPre=-/usr/bin/docker kill couchbase
 ExecStartPre=-/usr/bin/docker rm couchbase
 ExecStartPre=-/usr/bin/docker pull tleyden5iwx/couchbase-server-3.0.1-exp
-ExecStart=/bin/bash -c 'while [ -z $(etcdctl get /couchbase.com/userpass) ]; do sleep 1; done; USERPASS=$(etcdctl get /couchbase.com/userpass); /usr/bin/docker run --name couchbase -v /opt/couchbase/var:/opt/couchbase/var --net=host tleyden5iwx/couchbase-server-3.0.1-exp couchbase-starter "$COREOS_PRIVATE_IPV4"'
+ExecStart=/bin/bash -c 'while [ -z $(etcdctl get /couchbase.com/userpass) ]; do sleep 1; done; USERPASS=$(etcdctl get /couchbase.com/userpass); /usr/bin/docker run --name couchbase -v /opt/couchbase/var:/opt/couchbase/var --net=host tleyden5iwx/couchbase-server-3.0.1-exp couchbase-starter "$COREOS_PRIVATE_IPV4" "$USERPASS"'
 ExecStop=/usr/bin/docker stop couchbase
 
 [X-Fleet]
