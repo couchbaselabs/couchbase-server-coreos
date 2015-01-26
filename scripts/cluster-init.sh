@@ -38,6 +38,7 @@ etcdctl rm --recursive /couchbase.com
 
 # clone repo with fleet unit files
 git clone https://github.com/couchbaselabs/couchbase-server-docker
+git checkout -t origin/support/0.2
 
 # add the username and password to etcd
 etcdctl set /couchbase.com/userpass "$userpass"
