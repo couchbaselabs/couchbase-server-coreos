@@ -19,7 +19,9 @@ func main() {
 		log.Fatal(usage)
 	}
 
-	couchbaseCluster := &cbcluster.CouchbaseCluster{}
+	etcdServers := []string{}
+	couchbaseCluster := cbcluster.NewCouchbaseCluster(etcdServers)
+
 	couchbaseCluster.LocalCouchbaseIp = os.Args[1]
 
 	userPass := os.Args[2]
