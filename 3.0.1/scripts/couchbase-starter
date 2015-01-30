@@ -1,4 +1,14 @@
 #!/bin/bash
 
+# Workaround https://github.com/coreos/go-etcd/issues/179 by checking out
+# an older version 
+
 # Download, build and install start script
-go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && cd $GOPATH/src/github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && git checkout -t origin/support/0.2 && go build && cp couchbase-start /usr/local/bin && couchbase-start "$@"
+go get -u -v github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \
+cd $GOPATH/src/github.com/coreos/go-etcd && \
+git checkout 6aa2da5a7a905609c93036b9307185a04a5a84a5 && \
+cd $GOPATH/src/github.com/couchbaselabs/couchbase-server-docker/scripts/couchbase-start && \
+git checkout -t origin/support/0.2 && \
+go build && \
+cp couchbase-start /usr/local/bin && \ 
+couchbase-start "$@"
