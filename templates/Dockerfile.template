@@ -6,6 +6,7 @@ ENV CB_VERSION		{{ .CB_VERSION }}
 ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
 ENV CB_PACKAGE		{{ .CB_PACKAGE }}
 ENV GOPATH /opt/go
+ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$GOPATH/bin
 
 # Create directory to hold go code
 RUN mkdir -p $GOPATH
@@ -41,8 +42,9 @@ RUN cp -r /opt/couchbase/bin/* /usr/local/bin && \
     cp -r /opt/couchbase/bin/tools/* /usr/local/bin && \
     cp -r /opt/couchbase/bin/install/* /usr/local/bin
 
-# Install Godep
-RUN go get -u -v github.com/tools/godep
+# Install Godep + couchbase-cluster-go
+RUN go get -u -v github.com/tools/godep && \
+    godep get github.com/tleyden/couchbase-cluster-go/...
 
 # Put start script
 ADD scripts/couchbase-cluster-wrapper /usr/local/bin/
