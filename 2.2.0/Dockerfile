@@ -41,11 +41,9 @@ RUN cp -r /opt/couchbase/bin/* /usr/local/bin && \
     cp -r /opt/couchbase/bin/tools/* /usr/local/bin && \
     cp -r /opt/couchbase/bin/install/* /usr/local/bin
 
+# Install Godep
+RUN go get -u -v github.com/tools/godep
+
 # Put start script
-ADD scripts/couchbase-starter /usr/local/bin/
+ADD scripts/couchbase-cluster-wrapper /usr/local/bin/
 
-# See http://docs.couchbase.com/couchbase-manual-2.5/cb-install/#xdcr
-EXPOSE 8091 8092 11210 11211
-
-USER root
-CMD couchbase-start 

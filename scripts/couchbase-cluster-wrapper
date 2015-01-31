@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# This script updates the couchbase-cluster binary to the latest master branch version
+# so that the docker image doesn't have to be rebuilt each time.
+
+# only do the update if $SKIP_COUCHBASE_CLUSTER_UPDATE is empty
+# since that means the user wants to pin it at the version when docker image was built.
+if [[ -z "$SKIP_COUCHBASE_CLUSTER_UPDATE" ]] ; then
+    godep get github.com/tleyden/couchbase-cluster-go/...
+fi
+
+couchbase-cluster "$@"
+
