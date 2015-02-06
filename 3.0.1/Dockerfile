@@ -6,7 +6,7 @@ ENV CB_VERSION		3.0.1
 ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
 ENV CB_PACKAGE		couchbase-server-community-3.0.1-centos6.x86_64.rpm
 ENV GOPATH /opt/go
-ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$GOPATH/bin
+ENV PATH $PATH:/opt/go/bin
 
 # Create directory to hold go code
 RUN mkdir -p $GOPATH
