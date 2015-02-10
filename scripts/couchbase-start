@@ -1,3 +1,4 @@
+#!/bin/sh
 
 # Couchbase Server start script which runs the process in the foreground
 # which is the typical way you would run it in a docker container
