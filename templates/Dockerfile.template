@@ -29,6 +29,7 @@ RUN yum install -y \
     initscripts \
     openssl \
     pkgconfig \
+    sudo \
     tar \
     wget 
 
