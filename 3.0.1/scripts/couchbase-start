@@ -1,14 +1,11 @@
 #!/bin/sh
 
-# Couchbase Server start script which runs the process in the foreground
-# which is the typical way you would run it in a docker container
+# Couchbase Server start script. 
 
 if [ "$(id -u)" != "0" ]; then
     echo "This script must be run as root"
     exit 1
 fi
-
-COUCHBASE_SERVER=/opt/couchbase/bin/couchbase-server
 
 # Create directories where couchbase stores its data
 cd /opt/couchbase
@@ -26,4 +23,4 @@ ulimit -c unlimited
 ulimit -l unlimited
 
 # Start couchbase, pass -noinput so it doesn't drop us in the erlang shell
-sudo -u couchbase $COUCHBASE_SERVER -- -noinput
+su - couchbase -c "/opt/couchbase/bin/couchbase-server -- -noinput"
