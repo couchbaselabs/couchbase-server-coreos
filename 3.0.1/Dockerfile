@@ -22,6 +22,13 @@ RUN yum install -y \
 # Install couchbase
 RUN rpm --install $CB_RELEASE_URL/$CB_VERSION/$CB_PACKAGE
 
+# Modify /etc/passwd to add a login shell, otherwise running
+#    su - couchbase -c "/opt/couchbase/bin/couchbase-server -- -noinput"
+# will give an error: 
+#    This account is currently not available.
+# This is only an issue on Couchbase Server 3.x, and it's a no-op on 2.x
+RUN sed -i -e 's/\/opt\/couchbase:\/sbin\/nologin/\/opt\/couchbase:\/bin\/sh/' /etc/passwd
+
 # Add start script
 ADD scripts/couchbase-start /usr/local/bin/
 
