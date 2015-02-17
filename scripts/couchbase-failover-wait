@@ -1,0 +1,104 @@
+#!/bin/sh
+
+set -e  # abort if anything fails
+
+# Failover a node and wait for the failover operation to complete
+
+# This can't be run in a container, since its kicked off via ExecStop,
+# and there is a known issue with running containers in ExecStop
+
+# get the username and password from etcd via etcdctl
+function getUserPassFromEtcd() {
+
+    userpass=$(etcdctl get /couchbase.com/userpass)
+    echo "userpass from etcd: $userpass"
+    
+    # parse user/pass into variables
+    IFS=':' read -a array <<< "$userpass"
+    username=${array[0]}
+    password=${array[1]}
+    echo "username: $username password: $password"
+
+}
+
+# init failover
+function initFailover() {
+
+   
+    # curl -v -X POST -u admin:password http://localhost:8091/controller/failOver -d otpNode=ns_1@10.3.3.63
+    # TODO: REST API equivalent of this
+    # couchbase-cli failover --cluster=172.17.8.101:8091 --server-failover=172.17.8.102:8091 --user=user --password=passw0rd
+    
+    curl -v -X POST -u $username:$password http://$couchbaseLocalIp:8091/controller/failOver -d otpNode=ns_1@$couchbaseLocalIp
+
+
+}
+
+# wait for failover progress to finish
+function waitForFailoverFinish() {
+
+    # unfinished:
+    # curl http://user:passw0rd@172.17.8.101:8091/pools/default/rebalanceProgress
+    #{"status":"running","ns_1@172.17.8.101":{"progress":0.0302734375},"ns_1@172.17.8.102":{"progress":0.0302734375}}
+    # finished
+    # curl http://user:passw0rd@172.17.8.101:8091/pools/default/rebalanceProgress
+    #{"status":"none"}
+
+    finished=""
+    while [[ -z $finished ]]; do
+
+        echo "curl http://$couchbaseLocalIp:8091/pools/default/rebalanceProgress"
+        result=$(curl -s -S http://$username:$password@$couchbaseLocalIp:8091/pools/default/rebalanceProgress)
+        echo "result: $result"
+        if [[ -z $result ]]; then
+            echo "No response from rebalanceProgress -- is username/password correct?"
+            exit 1
+        fi
+        if [[ $result == *"none"* ]] ; then
+            echo "No rebalance running, we are done"
+            finished="true"
+        else
+            echo "Rebalance detected: $result.  Sleeping 5s"
+            sleep 5
+            echo "Done sleeping"
+        fi
+
+    done
+
+}
+
+function parseArgs() {
+
+    while getopts ":i:" opt; do
+	  case $opt in
+	    i  ) couchbaseLocalIp=$OPTARG ;;
+	    \? ) echo $usage
+		 exit 1 ;;
+	  esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    # make sure required args were given
+    if [[ -z "$couchbaseLocalIp" ]] ; then
+	echo "Missing required args"
+	exit 1
+    fi
+
+}
+
+parseArgs "$@"
+
+getUserPassFromEtcd
+
+initFailover
+
+echo "Initialized failover, wait 30s"
+sleep 30
+echo "Done sleeping"
+
+waitForFailoverFinish
+
+
+
+
