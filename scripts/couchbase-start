@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 # Couchbase Server start script. 
 
 if [ "$(id -u)" != "0" ]; then
@@ -24,3 +26,5 @@ ulimit -l unlimited
 
 # Start couchbase, pass -noinput so it doesn't drop us in the erlang shell
 su - couchbase -c "/opt/couchbase/bin/couchbase-server -- -noinput"
+
+echo "couchbase-server finished running"
