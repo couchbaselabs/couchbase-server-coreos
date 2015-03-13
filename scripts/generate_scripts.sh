@@ -2,16 +2,16 @@
 
 # For the following files, they are static so just copy them
 
-cp ../templates/README.md \
+cp ../README.md \
    ../community-edition/2.2.0/
 
-cp ../templates/README.md \
+cp ../README.md \
    ../community-edition/3.0.1/
 
-cp ../templates/README.md \
+cp ../README.md \
    ../enterprise-edition/2.5.2/
 
-cp ../templates/README.md \
+cp ../README.md \
    ../enterprise-edition/3.0.2/
 
 cp couchbase-start ../community-edition/2.2.0/scripts/
