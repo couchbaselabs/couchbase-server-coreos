@@ -4,7 +4,7 @@ MAINTAINER Traun Leyden <tleyden@couchbase.com>
 
 ENV CB_VERSION		2.5.2
 ENV CB_RELEASE_URL	http://packages.couchbase.com/releases
-ENV CB_PACKAGE		couchbase-server-enterprise_2.5.2_x86_64
+ENV CB_PACKAGE		couchbase-server-enterprise_2.5.2_x86_64.rpm
 
 # Add couchbase binaries to PATH
 ENV PATH $PATH:/opt/couchbase/bin:/opt/couchbase/bin/tools:/opt/couchbase/bin/install
