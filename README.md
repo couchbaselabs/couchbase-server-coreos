@@ -2,6 +2,8 @@
 
 Run Couchbase Server under Docker + CoreOS.
 
+(if you are looking for *just* Couchbase Server + Docker, without CoreOS, see [couchbase/server on Dockerhub](https://hub.docker.com/u/couchbase/server))
+
 ## Instructions 
 
 * [Couchbase Server](http://tleyden.github.io/blog/2014/11/01/running-couchbase-cluster-under-coreos-on-aws/)
