@@ -217,6 +217,7 @@ Here is the web UI where you need to shutdown the cluster:
 * [Disabling CoreOS restarts](https://github.com/couchbaselabs/couchbase-server-coreos/wiki/Disabling-CoreOS-auto-restart)
 * [Running Sync Gateway behind an Nginx proxy](https://github.com/tleyden/couchbase-cluster-go#running-sync-gateway-behind-an-nginx-proxy)
 * [How reboots are handled](https://github.com/couchbaselabs/couchbase-server-docker/issues/3#issuecomment-75984021)
+* [Couchbase-Cluster-Go README](https://github.com/tleyden/couchbase-cluster-go/blob/master/README.md)
 
 ## References
 
