@@ -6,7 +6,7 @@ Here are instructions on how to fire up a Couchbase Server cluster running under
 
 ![architecture diagram](http://tleyden-misc.s3.amazonaws.com/blog_images/couchbase-coreos-onion.png)
 
-*Disclaimer: this approach to running Couchbase Server and Sync Gateway is entirely **experimental** and you should do your own testing before running a production system.*
+*Disclaimer*: this approach to running Couchbase Server and Sync Gateway is entirely **experimental** and you should do your own testing before running a production system.
 
 ## Launch CoreOS instances via AWS Cloud Formation
 
