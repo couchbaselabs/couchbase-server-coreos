@@ -12,7 +12,7 @@ Here are instructions on how to fire up a Couchbase Server cluster running under
 
 Click the "Launch Stack" button to launch your CoreOS instances via AWS Cloud Formation:
 
-[<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#cstack=sn%7ECouchbase-CoreOS%7Cturl%7Ehttp://tleyden-misc.s3.amazonaws.com/couchbase-coreos/couchbase_server.template)
+[<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#cstack=sn%7ECouchbase-CoreOS%7Cturl%7Ehttp://tleyden-misc.s3.amazonaws.com/couchbase-coreos/sync_gateway.template)
 
 *NOTE: this is hardcoded to use the us-east-1 region, so if you need a different region, you should edit the URL accordingly*
 
